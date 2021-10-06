@@ -1,0 +1,147 @@
+# comments use a # (pound sign, hash)
+
+# all root values get serialized into single dictionary
+
+debug bool: false
+name str: My Name  # strings don't need quotes amd will me trimmed of whitespace
+name_quotes str: " My Name"  # but they can use them if you don't want to trim the whitespace
+name_single_quotes str: 'My Name '  # single or double quotes
+escaping str: " My \"Name"
+graphics:
+	target_framerate int: 600
+	fullscreen bool: false
+	resolution dict:
+		width int: 1920
+		height int: 1080
+	key str: value
+	key_without_value float  # defaults to null
+# indentation has to be a tab
+
+a_char char: a  # can only be a single character
+
+multi_line_str str: "This
+string is
+on multiple
+lines.
+"
+
+"keys can be in quotes" int: 1  # for keys to have spaces it must be in quotes
+# to have a key the same name as a keyword use a string
+"int" int: 1
+# string values that are the same as keywords are supported
+"an_int" str: int
+
+some_bytes bytes: 1110101
+a_complex complex: 3-2i
+a_decimal dec: 4.2
+infinity float: inf
+neg_infinity float: -inf
+not_a_number float: nan
+sci_note float: 1.3e-4
+hexadecimal hex: deadbeef
+octal oct: 7
+base_64 base64: VGhlIFNwYW5pc2ggSW5xdWlzaXRpb24h
+birthday date: 1986-02-10
+new_year datetime: 2020-01-01 12:00:00 -6
+my_interval interval: 1 hour
+alarm time: 08:00:00AM
+ip_address ip: 192.168.1.1
+
+number_sep int: 100_000_000  # numbers support seperators
+
+uniform_list int: [  # list entries are delimeted by a return character and use square brackets
+	1
+	2
+	4
+	7
+]
+
+complex_list: [
+	things:
+		one int: 1
+		two int: 2
+	other_things:
+		three int: 3
+		four int: 4
+]
+
+heterogeneous_list: [
+	int: 1
+	float: 3.14159
+	dec: 2.11
+	str: hello
+]
+
+uniform_list_one_liner int: [1, 2, 3,]  # trailing commas are valid
+heterogeneous_list_one_liner: [int: 1, float: 3.14159, dec: 2.11, str: hello]
+
+a_tuple tuple: (  # tuples use parentheses and need each items type defined
+	int: 1
+	float: 2
+	dec: 3
+	str: 4
+)
+
+named_tuple: (
+	one int
+	two int
+	three float: 3.0
+)
+
+tuple_one_liner: (int:1,float:2)  # spaces are not required between entries or key-values
+
+range_example range: 1..5  # non-inclusive
+inclusive_example range: 1...5  # inclusive
+
+a_uniform_set int: {  # sets use curly braces but don't have keys
+	1
+	3
+	# 3  # another 3 is not allowed!
+	4
+}
+# a non-uniform set is similar to the list variety
+
+set_one_liner int: {1, 2, 3}
+
+dict_one_liner: {one int: 1, two float: 2}
+
+# structs are very similar to dictionaries but can be handled differently by the consuming language
+# Python could create a dataclass for example
+# either dynamically or human readable code can be generated
+MyStruct struct:
+	nested_struct struct:
+		first int: 1
+		second int: 2
+	enum_dict dict:  # dict type is optional
+		third float: 3
+		fourth: str: 4
+	key str: value
+	key_without_value float
+	recursion MyStruct
+
+AnotherStruct struct:
+	ref_other_struct MyStruct
+
+an_enum enum:
+	red  # enums entries don't need a type or a value but they can
+	blue
+
+# a service describes an interface that must be implimented
+my_service service:
+	a_method(int, float) int  # takes int and float and returns an int
+	no_return_method(str)  # this doesn't have a return value
+	default_values(str hello, int 5) str  # default values can be specified for parameters
+	return_type_unknown() any
+# services don't get serialized into the resulting root dictionary
+
+# decorators add metadata to fields
+@immutable
+some_data struct:
+
+	@required
+	my_name str
+
+	@optional
+	my_age int
+
+# allow inheritance

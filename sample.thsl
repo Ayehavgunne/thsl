@@ -3,26 +3,26 @@
 # all root values get serialized into single dictionary
 
 debug bool: false
-name str: My Name  # strings don't need quotes amd will me trimmed of whitespace
-name_quotes str: " My Name"  # but they can use them if you don't want to trim the whitespace
-name_single_quotes str: 'My Name '  # single or double quotes
+name str: Frank Drebin  # strings don't need quotes amd will be left/right trimmed of whitespace
+name_quotes str: " My name"  # but they can use them if you don't want to trim the whitespace
+name_single_quotes str: 'My name is {name}'  # single quotes allow templating
 escaping str: " My \"Name"
 graphics:
-	target_framerate int: 600
+	target_framerate int: 60
 	fullscreen bool: false
 	resolution dict:
 		width int: 1920
 		height int: 1080
-	key str: value
-	key_without_value float  # defaults to null
+	key str  # defaults to empty string
+	key_without_value float  # defaults to 0
 # indentation has to be a tab
 
 a_char char: a  # can only be a single character
 
 multi_line_str str: "This
 string is
-on multiple
-lines.
+    on multiple
+         lines.
 "
 
 "keys can be in quotes" int: 1  # for keys to have spaces it must be in quotes
@@ -152,7 +152,7 @@ some_data struct:
 #	debug bool: false
 #	show_fps bool: true
 #	Graphics struct:
-#		target_framerate int: 600
+#		target_framerate int: 60
 #		fullscreen bool: false
 #		hardware_acceleration bool: false
 #		vsync bool: false

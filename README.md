@@ -1,8 +1,6 @@
 # thsl (Thistle)
 ### Typed Human-friendly Serialization Language
-A typed configuration and serialization format. Imagine YAML combined with Protobufs,
-aiming for the best of both with a little TOML and Amazon Ion thrown in for good
-measure.
+A typed configuration and serialization format. Imagine YAML crossed with Protobufs.
 
 ## Example
 ```

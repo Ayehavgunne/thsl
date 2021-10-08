@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Any, Iterator, Literal
+from typing import Optional, Iterator, Literal
 
 from src.grammar import DataTypes, TokenType, Constants, Operators
 
@@ -8,7 +8,7 @@ class Token:
     def __init__(
         self,
         token_type: TokenType,
-        value: Any,
+        value: str,
         line_num: int,
         column_num: int,
         indent_level: int,
@@ -41,6 +41,7 @@ class Lexer:
         self.column = 1
         self.current_char: Optional[str] = self.text[self.pos]
         self.char_type: Optional[TokenType] = None
+        self._current_token: Optional[Token] = None
         self.word = ""
         self.word_type: Optional[TokenType] = None
         self._line_num = 1
@@ -100,6 +101,7 @@ class Lexer:
         current_word_type = self.word_type
         current_line_num = self.line_num
         current_indent_level = self.indent_level
+        current_last_token = self.last_token
         for _ in range(num):
             next_token = self.get_next_token()
         self.pos = current_pos
@@ -109,6 +111,7 @@ class Lexer:
         self.word_type = current_word_type
         self._line_num = current_line_num
         self._indent_level = current_indent_level
+        self.last_token = current_last_token
         return next_token
 
     def skip_whitespace(self) -> None:
@@ -170,14 +173,17 @@ class Lexer:
         self.next_char()
         return token
 
-    def skip_indent(self) -> None:
-        while (
-            self.current_char is not None
-            and self.current_char == TokenType.INDENT.value
-        ):
-            self.reset_word()
-            self.increment_indent_level()
-            self.next_char()
+    def eat_indent(self) -> Token:
+        self.reset_word()
+        self.increment_indent_level()
+        self.next_char()
+        return Token(
+            TokenType.INDENT,
+            TokenType.INDENT.value,
+            self.line_num,
+            self.column,
+            self.indent_level,
+        )
 
     def eof(self) -> Token:
         return Token(
@@ -195,18 +201,32 @@ class Lexer:
         ],
     ) -> Token:
         self.next_char()
-        while self.current_char != quote.value:
-            if (
-                self.current_char == TokenType.ESCAPE.value
-                and self.peek(1) == quote.value
+        if quote == TokenType.NEWLINE:
+            while (
+                self.current_char != quote.value
+                and self.current_char != TokenType.COMMENT.value
             ):
+                if (
+                    self.current_char == TokenType.ESCAPE.value
+                    and self.peek(1) == quote.value
+                ):
+                    self.next_char()
+                self.word += self.current_char
                 self.next_char()
-            self.word += self.current_char
-            self.next_char()
+            self.word = self.word.strip()
+        else:
+            while self.current_char != quote.value:
+                if (
+                    self.current_char == TokenType.ESCAPE.value
+                    and self.peek(1) == quote.value
+                ):
+                    self.next_char()
+                self.word += self.current_char
+                self.next_char()
         if quote != TokenType.NEWLINE:
             self.next_char()
         return Token(
-            TokenType.STRING,
+            TokenType.VALUE,
             self.reset_word(),
             self.line_num,
             self.column,
@@ -270,7 +290,7 @@ class Lexer:
     def eat_type(self) -> Token:
         while (
             self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMERIC
+            or self.char_type == TokenType.NUMBER
         ):
             if self.current_char == Operators.VALUE_DELIMITER.value:
                 break
@@ -343,7 +363,7 @@ class Lexer:
     def eat_alpha(self) -> Token:
         while (
             self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMERIC
+            or self.char_type == TokenType.NUMBER
         ):
             if self.current_char == Operators.VALUE_DELIMITER.value:
                 break
@@ -371,7 +391,16 @@ class Lexer:
 
         if self.word in Constants.values():
             return Token(
-                TokenType.CONSTANT,
+                TokenType.VALUE,
+                self.reset_word(),
+                self.line_num,
+                self.column,
+                self.indent_level,
+            )
+
+        if self.current_data_type is not None:
+            return Token(
+                TokenType.VALUE,
                 self.reset_word(),
                 self.line_num,
                 self.column,
@@ -389,16 +418,17 @@ class Lexer:
     def eat_numeric(self) -> Token:
         if self.current_data_type == DataTypes.COMPLEX:
             while (
-                self.char_type == TokenType.NUMERIC
-                or self.current_char == "i"
+                self.char_type == TokenType.NUMBER
+                or self.current_char in ("i", "j")
                 or self.current_char == Operators.DOT.value
                 or self.current_char == Operators.MINUS.value
                 and self.peek(1) != Operators.DOT.value
             ):
                 self.word += self.current_char
                 self.next_char()
+            self.word = self.word.replace('i', 'j')
             return Token(
-                TokenType.NUMBER,
+                TokenType.VALUE,
                 self.reset_word(),
                 self.line_num,
                 self.column,
@@ -406,7 +436,7 @@ class Lexer:
             )
         if self.current_data_type == DataTypes.HEX:
             while (
-                self.char_type == TokenType.NUMERIC
+                self.char_type == TokenType.NUMBER
                 or self.current_char == Operators.DOT.value
                 or self.current_char in ("a", "b", "c", "d", "e", "f")
                 or self.current_char == Operators.MINUS.value
@@ -415,7 +445,7 @@ class Lexer:
                 self.word += self.current_char
                 self.next_char()
             return Token(
-                TokenType.NUMBER,
+                TokenType.VALUE,
                 self.reset_word(),
                 self.line_num,
                 self.column,
@@ -431,14 +461,16 @@ class Lexer:
                 self.skip_char()
                 self.skip_char()
                 return Token(
-                    TokenType.CONSTANT,
+                    TokenType.VALUE,
                     next_word,
                     self.line_num,
                     self.column,
                     self.indent_level,
                 )
+            self.pos -= 1
+            return self.eat_string(TokenType.NEWLINE)
         while (
-            self.char_type == TokenType.NUMERIC
+            self.char_type == TokenType.NUMBER
             or self.current_char == Operators.DOT.value
             or self.current_char == Operators.NUMBER_SEPERATOR.value
             or self.current_char == Operators.MINUS.value
@@ -447,17 +479,29 @@ class Lexer:
             self.word += self.current_char
             self.next_char()
         return Token(
-            TokenType.NUMBER,
+            TokenType.VALUE,
             self.reset_word().replace(Operators.NUMBER_SEPERATOR.value, ""),
             self.line_num,
             self.column,
             self.indent_level,
         )
 
+    def eat_date(self) -> Token:
+        self.pos -= 1
+        return self.eat_string(TokenType.NEWLINE)
+
+    def eat_ip(self) -> Token:
+        self.pos -= 1
+        return self.eat_string(TokenType.NEWLINE)
+
+    def eat_range(self) -> Token:
+        self.pos -= 1
+        return self.eat_string(TokenType.NEWLINE)
+
     def eat_constant(self) -> Token:
         while (
             self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMERIC
+            or self.char_type == TokenType.NUMBER
         ):
             if self.current_char == Operators.VALUE_DELIMITER.value:
                 break
@@ -466,7 +510,7 @@ class Lexer:
 
         if self.word in Constants.values():
             return Token(
-                TokenType.CONSTANT,
+                TokenType.VALUE,
                 self.reset_word(),
                 self.line_num,
                 self.column,
@@ -498,16 +542,16 @@ class Lexer:
         if char == TokenType.ESCAPE.value:
             return TokenType.ESCAPE
         if char in Operators.values():
-            return TokenType.OPERATIC
+            return TokenType.OPERATOR
         if char in Constants.values():
             return TokenType.CONSTANT
         if char.isdigit():
-            return TokenType.NUMERIC
+            return TokenType.NUMBER
         if char == "":
             return TokenType.EMPTY
         return TokenType.ALPHANUMERIC
 
-    def get_next_token(self) -> Token:
+    def _get_next_token(self) -> Token:
         if self.current_char is None:
             return self.eof()
 
@@ -523,7 +567,7 @@ class Lexer:
         if self.current_char == TokenType.NEWLINE.value:
             return self.eat_newline()
         elif self.current_char == TokenType.INDENT.value:
-            self.skip_indent()
+            return self.eat_indent()
 
         if self.current_char.isspace():
             self.skip_whitespace()
@@ -559,7 +603,7 @@ class Lexer:
         if not self.word_type:
             self.word_type = self.char_type
 
-        if self.word_type == TokenType.OPERATIC:
+        if self.word_type == TokenType.OPERATOR:
             return self.eat_operator()
 
         if self.current_data_type in (
@@ -572,13 +616,27 @@ class Lexer:
         ):
             return self.eat_numeric()
 
+        if self.current_data_type in (
+            DataTypes.DATE,
+            DataTypes.DATETIME,
+            DataTypes.TIME,
+            DataTypes.INTERVAL,
+        ):
+            return self.eat_date()
+
+        if self.current_data_type in (DataTypes.IP_ADDRESS, DataTypes.IP_NETWORK):
+            return self.eat_ip()
+
+        if self.current_data_type == DataTypes.RANGE:
+            return self.eat_range()
+
         if self.word_type == TokenType.CONSTANT:
             return self.eat_constant()
 
         if self.word_type == TokenType.ALPHANUMERIC:
             return self.eat_alpha()
 
-        if self.word_type == TokenType.NUMERIC:
+        if self.word_type == TokenType.NUMBER:
             return self.eat_numeric()
 
         if self.char_type == TokenType.ESCAPE:
@@ -587,12 +645,17 @@ class Lexer:
         raise SyntaxError("Unknown character")
 
     def analyze(self) -> Iterator[Token]:
-        token = self.get_next_token()
+        token = self._get_next_token()
         while token.type != TokenType.EOF:
             yield token
             self.last_token = token
-            token = self.get_next_token()
+            token = self._get_next_token()
         yield token
+
+    def get_next_token(self) -> Token:
+        self.last_token = self._current_token
+        self._current_token = self._get_next_token()
+        return self._current_token
 
 
 if __name__ == "__main__":

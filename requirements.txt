@@ -1,0 +1,2 @@
+python-dateutil==2.8.2
+tempora==4.1.1

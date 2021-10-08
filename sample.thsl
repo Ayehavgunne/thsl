@@ -30,6 +30,7 @@ lines.
 "int" int: 1
 # string values that are the same as keywords are supported
 "an_int" str: int
+1 str: one  # keys will always end up as strings
 
 some_bytes bytes: 1110101
 a_complex complex: 3-2i
@@ -46,6 +47,7 @@ new_year datetime: 2020-01-01 12:00:00 -6
 my_interval interval: 1 hour
 alarm time: 08:00:00AM
 ip_address ip: 192.168.1.1
+ip_address network: 192.168.1.1/28
 
 number_sep int: 100_000_000  # numbers support seperators
 
@@ -145,3 +147,16 @@ some_data struct:
 	my_age int
 
 # allow inheritance
+
+#Config struct:
+#	debug bool: false
+#	show_fps bool: true
+#	Graphics struct:
+#		target_framerate int: 600
+#		fullscreen bool: false
+#		hardware_acceleration bool: false
+#		vsync bool: false
+#		scaled bool: true
+#		Resolution struct: # 16:9 aspect ratio only please
+#			width int: 1920
+#			height int: 1080

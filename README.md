@@ -73,21 +73,22 @@ Not finalized. Subject to change
 - Self-describing compact binary output
 
 ## Lexer TODO:
-- [ ] scientific notation
-- [ ] date/times
+- [x] scientific notation
+- [x] date/times
+- [x] ranges
 - [ ] heterogeneous lists
 - [ ] single line dicts
 - [ ] regular tuples
 - [ ] null tuples
 - [ ] single line tuples
-- [ ] ranges
 - [ ] inheritance
 - [ ] decorators
 - [ ] services
 - [ ] fix `value=',]'` with trailing comma
 
 ## Parser TODO:
-- [ ] start
+- [x] start
+- [ ] nesting
 
 ## Other TODO:
 - [ ] binary output

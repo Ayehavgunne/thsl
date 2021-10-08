@@ -1,12 +1,8 @@
-Config struct:
-	debug bool: false
-	show_fps bool: true
-	Graphics struct:
-		target_framerate int: 600
-		fullscreen bool: false
-		hardware_acceleration bool: false
-		vsync bool: false
-		scaled bool: true
-		Resolution struct: # 16:9 aspect ratio only please
-			width int: 1920
-			height int: 1080
+stuff:
+	hi str: hello
+	what:
+		more str: greatings
+		things:
+			nesting str: yes
+		food str: wfs
+	hey str: goon

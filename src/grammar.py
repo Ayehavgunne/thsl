@@ -20,6 +20,7 @@ class DataTypes(EnumDict):
     OCT = "oct"
     COMPLEX = "complex"
     BASE64 = "base64"
+    BASE64E = "base64e"
     STR = "str"
     CHAR = "char"
     BOOL = "bool"
@@ -31,13 +32,28 @@ class DataTypes(EnumDict):
     INTERVAL = "interval"
     IP_ADDRESS = "ip"
     IP_NETWORK = "network"
+    URL = "url"
+    ENV = "env"
+
     LIST = "list"
     SET = "set"
     DICT = "dict"
     TUPLE = "tuple"
     ENUM = "enum"
     STRUCT = "struct"
-    SERVICE = "service"
+
+    INTERFACE = "interface"
+    ALIAS = "alias"
+
+
+COMPOUND_TYPES = (
+    DataTypes.LIST,
+    DataTypes.SET,
+    DataTypes.DICT,
+    DataTypes.TUPLE,
+    DataTypes.ENUM,
+    DataTypes.STRUCT,
+)
 
 
 class Constants(EnumDict):
@@ -52,7 +68,6 @@ class Operators(EnumDict):
     DECORATOR = "@"
     VALUE_DELIMITER = ":"
     MINUS = "-"
-    NUMBER_SEPERATOR = "_"
     LPAREN = "("
     RPAREN = ")"
     LSQUAREBRACKET = "["
@@ -65,13 +80,29 @@ class Operators(EnumDict):
     ELLIPSIS = "..."
     SINGLE_QUOTE = "'"
     DOUBLE_QUOTE = '"'
-    EXTENDS = "extends"
+    EXTENDS = "->"
+
+
+OPENING_BRACKETS = (Operators.LPAREN, Operators.LSQUAREBRACKET, Operators.LCURLYBRACKET)
+CLOSING_BRACKETS = (Operators.RPAREN, Operators.RSQUAREBRACKET, Operators.RCURLYBRACKET)
+
+QUOTES = (Operators.SINGLE_QUOTE, Operators.DOUBLE_QUOTE)
+
+MULTI_CHAR_OPERATORS = (
+    Operators.DOT,
+    Operators.RANGE,
+    Operators.ELLIPSIS,
+    Operators.EXTENDS,
+)
+
+OPERATORS_TO_IGNORE = ("_",)
+
+OTHER_NUMERIC_CHARACTERS = (Operators.DOT.value, "i", "e", "_", "-")
 
 
 class TokenType(EnumDict):
     TYPE = "TYPE"
     NUMBER = "NUMBER"
-    STRING = "STRING"
     OPERATOR = "OPERATOR"
     CONSTANT = "CONSTANT"
     COMMENT = "#"

@@ -1,86 +1,126 @@
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Iterator, Literal
 
-from src.grammar import DataTypes, TokenType, Constants, Operators
+from src.grammar import (
+    TokenType,
+    Constants,
+    DataTypes,
+    Operators,
+    OPERATORS_TO_IGNORE,
+    MULTI_CHAR_OPERATORS,
+    OTHER_NUMERIC_CHARACTERS,
+)
 
 
+@dataclass
+class TokenMetaData:
+    single_quote: bool
+    double_quote: bool
+
+
+@dataclass
 class Token:
-    def __init__(
-        self,
-        token_type: TokenType,
-        value: str,
-        line_num: int,
-        column_num: int,
-        indent_level: int,
-    ) -> None:
-        self.type = token_type
-        self.value = value
-        self.line_num = line_num
-        self.column_num = column_num
-        self.indent_level = indent_level
+    type: TokenType
+    value: str
+    line: int
+    indent: int
+    column: int = field(compare=False, default=0)
+    meta_data: Optional[TokenMetaData] = field(compare=False, default=None)
 
     def __str__(self):
         return (
             f"Token("
-            f"type={self.type}, "
-            f"value={repr(self.value)}, "
-            f"line_num={self.line_num}, "
-            # f"column_num={self.column_num}, "
-            f"indent_level={self.indent_level}"
+            f"type={self.type.name}, "
+            f"value={self.value!r}, "
+            f"line={self.line}"
             f")"
         )
 
-    __repr__ = __str__
-
 
 class Lexer:
-    def __init__(self, text: str, file_path: Path = None) -> None:
+    def __init__(self, text: str) -> None:
+        self._pos: int
+        self._column: int
+        self._current_char: Optional[str]
+        self._char_type: Optional[TokenType]
+        self._current_token: Optional[Token]
+        self._current_data_type: Optional[DataTypes]
+        self._current_key: Optional[Token]
+        self._current_operator: Optional[Operators]
+        self._word: str
+        self._word_type: Optional[TokenType]
+        self._line_num: int
+        self._indent_level: int
+        self.new_types: list[str]
         self.text = text
-        self.file_path = file_path
-        self.pos = 0
-        self.column = 1
-        self.current_char: Optional[str] = self.text[self.pos]
-        self.char_type: Optional[TokenType] = None
-        self._current_token: Optional[Token] = None
-        self.word = ""
-        self.word_type: Optional[TokenType] = None
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, text: str) -> None:
+        self._text = text
+        self._pos = 0
+        self._current_char = self.text[self._pos]
         self._line_num = 1
         self._indent_level = 0
-        self.last_token: Optional[Token] = None
-        self.current_data_type: Optional[DataTypes] = None
-        self.current_key: Optional[Token] = None
-        self.new_types: list[str] = []
-        self.open_bracket: Optional[
-            Literal[Operators.LPAREN, Operators.LSQUAREBRACKET, Operators.LCURLYBRACKET]
-        ] = None
+        self._word = ""
+        self._word_type = None
+        self._column = 1
+        self._char_type = None
+        self._current_token = None
+        self._current_data_type = None
+        self._current_key = None
+        self._current_operator = None
+        self.new_types = []
 
-    def next_char(self) -> None:
-        self.pos += 1
-        self.column += 1
-        if self.pos > len(self.text) - 1:
-            self.current_char = None
-            self.char_type = None
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        line_num: int = None,
+        meta_data: TokenMetaData = None,
+    ) -> Token:
+        if not line_num:
+            line_num = self._line_num
+        return Token(
+            type=token_type,
+            value=value,
+            line=line_num,
+            column=self._column,
+            indent=self._indent_level,
+            meta_data=meta_data,
+        )
+
+    def _next_char(self) -> None:
+        self._pos += 1
+        self._column += 1
+        if self._pos > len(self.text) - 1:
+            self._current_char = None
+            self._char_type = None
         else:
-            self.current_char = self.text[self.pos]
-            self.char_type = self.get_type(self.current_char)
+            self._current_char = self.text[self._pos]
+            self._char_type = self._get_type(self._current_char)
 
-    def skip_char(self) -> None:
-        self.pos += 1
-        self.column += 1
-        if self.pos > len(self.text) - 1:
-            self.current_char = None
-            self.char_type = None
+    def _skip_char(self) -> None:
+        self._pos += 1
+        self._column += 1
+        if self._pos > len(self.text) - 1:
+            self._current_char = None
+            self._char_type = None
         else:
-            self.current_char = self.text[self.pos]
+            self._current_char = self.text[self._pos]
 
-    def reset_word(self) -> str:
-        old_word = self.word
-        self.word = ""
-        self.word_type = None
+    def _reset_word(self) -> str:
+        old_word = self._word
+        self._word = ""
+        self._word_type = None
         return old_word
 
-    def peek(self, num: int, ignore_whitespace: bool = False) -> Optional[str]:
-        peek_pos = self.pos + num
+    def _peek(self, num: int, ignore_whitespace: bool = False) -> Optional[str]:
+        peek_pos = self._pos + num
         if ignore_whitespace:
             while peek_pos > len(self.text) - 1 and self.text[peek_pos].isspace():
                 peek_pos += 1
@@ -94,447 +134,258 @@ class Lexer:
         if num < 1:
             raise ValueError("num argument must be 1 or greater")
         next_token = None
-        current_pos = self.pos
-        current_char = self.current_char
-        current_char_type = self.char_type
-        current_word = self.word
-        current_word_type = self.word_type
-        current_line_num = self.line_num
-        current_indent_level = self.indent_level
-        current_last_token = self.last_token
+        current_pos = self._pos
+        current_char = self._current_char
+        current_char_type = self._char_type
+        current_word = self._word
+        current_word_type = self._word_type
+        current_line_num = self._line_num
+        current_indent_level = self._indent_level
         for _ in range(num):
-            next_token = self.get_next_token()
-        self.pos = current_pos
-        self.current_char = current_char
-        self.char_type = current_char_type
-        self.word = current_word
-        self.word_type = current_word_type
+            next_token = self._get_next_token()
+        self._pos = current_pos
+        self._current_char = current_char
+        self._char_type = current_char_type
+        self._word = current_word
+        self._word_type = current_word_type
         self._line_num = current_line_num
         self._indent_level = current_indent_level
-        self.last_token = current_last_token
         return next_token
 
-    def skip_whitespace(self) -> None:
-        if self.peek(-1) == TokenType.NEWLINE.value:
+    def _skip_whitespace(self) -> None:
+        if self._peek(-1) == TokenType.NEWLINE.value:
             raise SyntaxError("Only tab characters can indent")
-        while self.current_char is not None and self.current_char.isspace():
-            self.next_char()
-            self.reset_word()
+        while self._current_char is not None and self._current_char.isspace():
+            self._next_char()
+            self._reset_word()
 
-    def skip_comment(self) -> Token:
-        while self.current_char != TokenType.NEWLINE.value:
-            self.skip_char()
-            if self.current_char is None:
-                return self.eof()
-        return self.eat_newline()
+    def _skip_comment(self) -> Token:
+        while self._current_char != TokenType.NEWLINE.value:
+            self._skip_char()
+            if self._current_char is None:
+                return self._eof()
+        return self._eat_newline()
 
-    def increment_line_num(self) -> None:
+    def _increment_line_num(self) -> None:
         self._line_num += 1
 
-    @property
-    def line_num(self) -> int:
-        return self._line_num
-
-    @property
-    def indent_level(self) -> int:
-        return self._indent_level
-
-    def reset_indent_level(self) -> int:
-        self._indent_level = 0
-        return self._indent_level
-
-    def reset_column(self) -> int:
-        column = self.column
-        self.column = 0
-        return column
-
-    def decriment_indent_level(self) -> int:
-        self._indent_level -= 1
-        return self._indent_level
-
-    def increment_indent_level(self) -> int:
-        self._indent_level += 1
-        return self._indent_level
-
-    def eat_newline(self) -> Token:
-        self.reset_word()
-        token = Token(
+    def _eat_newline(self) -> Token:
+        self._reset_word()
+        token = self._make_token(
             TokenType.NEWLINE,
             TokenType.NEWLINE.value,
-            self.line_num,
-            self.column,
-            self.indent_level,
         )
-        self.current_data_type = None
-        self.current_key = None
-        self.reset_column()
-        self.reset_indent_level()
-        self.increment_line_num()
-        self.next_char()
+        self._column = 0
+        self._indent_level = 0
+        self._increment_line_num()
+        self._current_data_type = None
+        self._current_key = None
+        self._next_char()
         return token
 
-    def eat_indent(self) -> Token:
-        self.reset_word()
-        self.increment_indent_level()
-        self.next_char()
-        return Token(
-            TokenType.INDENT,
-            TokenType.INDENT.value,
-            self.line_num,
-            self.column,
-            self.indent_level,
-        )
+    def _skip_indent(self) -> None:
+        while (
+            self._current_char is not None
+            and self._current_char == TokenType.INDENT.value
+        ):
+            self._reset_word()
+            self._indent_level += 1
+            self._next_char()
 
-    def eof(self) -> Token:
-        return Token(
+    def _eof(self) -> Token:
+        return self._make_token(
             TokenType.EOF,
             TokenType.EOF.value,
-            self.line_num,
-            self.column,
-            self.indent_level,
         )
 
-    def eat_string(
-        self,
-        quote: Literal[
-            Operators.DOUBLE_QUOTE, Operators.SINGLE_QUOTE, TokenType.NEWLINE
-        ],
-    ) -> Token:
-        self.next_char()
-        if quote == TokenType.NEWLINE:
-            while (
-                self.current_char != quote.value
-                and self.current_char != TokenType.COMMENT.value
-            ):
-                if (
-                    self.current_char == TokenType.ESCAPE.value
-                    and self.peek(1) == quote.value
-                ):
-                    self.next_char()
-                self.word += self.current_char
-                self.next_char()
-            self.word = self.word.strip()
-        else:
-            while self.current_char != quote.value:
-                if (
-                    self.current_char == TokenType.ESCAPE.value
-                    and self.peek(1) == quote.value
-                ):
-                    self.next_char()
-                self.word += self.current_char
-                self.next_char()
-        if quote != TokenType.NEWLINE:
-            self.next_char()
-        return Token(
-            TokenType.VALUE,
-            self.reset_word(),
-            self.line_num,
-            self.column,
-            self.indent_level,
-        )
-
-    def eat_key(self) -> Token:
-        if self.current_char in (
-            Operators.DOUBLE_QUOTE.value,
-            Operators.SINGLE_QUOTE.value,
+    def _eat_rest_of_line(self) -> Token:
+        if self._current_char == Operators.SINGLE_QUOTE.value:
+            return self._eat_string(Operators.SINGLE_QUOTE)
+        if self._current_char == Operators.DOUBLE_QUOTE.value:
+            return self._eat_string(Operators.DOUBLE_QUOTE)
+        while (
+            self._current_char != TokenType.NEWLINE.value
+            and self._current_char != TokenType.COMMENT.value
         ):
-            quote = Operators(self.current_char)
-            self.next_char()
-            while (
-                self.current_char != quote.value
-                and self.current_char != Operators.VALUE_DELIMITER.value
+            if (
+                self._current_char == TokenType.ESCAPE.value
+                and self._peek(1) == TokenType.NEWLINE.value
             ):
-                if (
-                    self.current_char == TokenType.ESCAPE.value
-                    and self.peek(1) == quote.value
+                self._next_char()
+            self._word += self._current_char
+            self._next_char()
+        self._word = self._word.strip()
+        return self._eat_value(
+            self._reset_word(),
+        )
+
+    def _eat_string(
+        self,
+        quote: Literal[Operators.DOUBLE_QUOTE, Operators.SINGLE_QUOTE],
+    ) -> Token:
+        self._next_char()
+        while self._current_char != quote.value:
+            if (
+                self._current_char == TokenType.ESCAPE.value
+                and self._peek(1) == quote.value
+            ):
+                self._next_char()
+            if self._current_char == TokenType.NEWLINE.value:
+                self._line_num += 1
+            self._word += self._current_char
+            self._next_char()
+        self._next_char()
+        if not self._current_key:
+            token = self._eat_key(
+                self._reset_word(),
+            )
+            self._current_key = token
+            return token
+        return self._eat_value(
+            self._reset_word(),
+            meta_data=TokenMetaData(quote.value == "'", quote.value == '"'),
+        )
+
+    def _eat_operator(self, value: str = None) -> Token:
+        if value:
+            return self._make_token(TokenType.OPERATOR, value)
+        while self._current_char in Operators.values():
+            self._word += self._current_char
+            self._next_char()
+        self._current_operator = Operators(self._word)
+        return self._make_token(
+            TokenType.OPERATOR,
+            self._reset_word(),
+        )
+        # if (
+        #     self.word in MULTI_CHAR_OPERATORS
+        #     and self.preview_token(1).value in MULTI_CHAR_OPERATORS
+        # ):
+        #     self.next_char()
+        #     self.word += " "
+        #     while (
+        #             self.char_type == TokenType.ALPHANUMERIC
+        #             or self.char_type == TokenType.NUMBER
+        #     ):
+        #         self.word += self.current_char
+        #         self.next_char()
+        #     token = self.make_token(TokenType.OPERATOR, self.reset_word())
+        # else:
+        #     token = self.make_token(TokenType.OPERATOR, self.reset_word())
+        # self._current_operator = Operators(self.word)
+        # return token
+
+    def _eat_type(self, value: str = None) -> Token:
+        if value:
+            return self._make_token(TokenType.TYPE, value)
+        if self._current_char == Operators.DOT.value:
+            self._next_char()
+        while (
+            self._char_type == TokenType.ALPHANUMERIC
+            or self._char_type == TokenType.NUMBER
+        ):
+            if self._current_char == Operators.VALUE_DELIMITER.value:
+                break
+            self._word += self._current_char
+            self._next_char()
+
+        self._current_data_type = DataTypes(self._word)
+
+        if self._word in self.new_types:
+            return self._make_token(
+                TokenType.TYPE,
+                self._reset_word(),
+            )
+        if self._word in DataTypes.values():
+            if self._current_key and self._current_data_type == DataTypes.STRUCT:
+                self.new_types.append(self._current_key.value)
+            return self._make_token(
+                TokenType.TYPE,
+                self._reset_word(),
+            )
+        raise SyntaxError("Expected a type")
+
+    def _eat_alpha(self) -> Token:
+        while (
+            self._char_type == TokenType.ALPHANUMERIC
+            or self._char_type == TokenType.NUMBER
+        ):
+            self._word += self._current_char
+            self._next_char()
+
+        if self._word in Operators.values():
+            if (
+                self._word in MULTI_CHAR_OPERATORS
+                and self.preview_token(1).value in MULTI_CHAR_OPERATORS
+            ):
+                self._next_char()
+                self._word += " "
+                while (
+                    self._char_type == TokenType.ALPHANUMERIC
+                    or self._char_type == TokenType.NUMBER
                 ):
-                    self.next_char()
-                self.word += self.current_char
-                self.next_char()
-            self.next_char()
+                    self._word += self._current_char
+                    self._next_char()
+                token = self._eat_operator(self._reset_word())
+            else:
+                token = self._eat_operator(self._reset_word())
+            self._current_operator = Operators(self._word)
+            return token
+        elif self._word in Constants.values():
+            return self._eat_constant(self._reset_word())
+        elif self._current_data_type:
+            return self._eat_value(self._reset_word())
+        else:
+            return self._eat_key()
+
+    def _eat_key(self, value: str = None) -> Token:
+        if value:
+            token = self._make_token(TokenType.KEY, value)
         else:
             while (
-                not self.current_char.isspace()
-                and self.current_char != Operators.VALUE_DELIMITER.value
+                self._char_type == TokenType.ALPHANUMERIC
+                or self._char_type == TokenType.NUMBER
             ):
-                self.word += self.current_char
-                self.next_char()
-        token = Token(
-            TokenType.KEY,
-            self.reset_word(),
-            self.line_num,
-            self.column,
-            self.indent_level,
-        )
-        self.current_key = token
+                self._word += self._current_char
+                self._next_char()
+            token = self._make_token(TokenType.KEY, self._reset_word())
+        self._current_key = token
         return token
 
-    def eat_operator(self) -> Token:
-        while self.current_char in Operators.values():
-            self.word += self.current_char
-            self.next_char()
-        if self.word in (
-            Operators.LPAREN.value,
-            Operators.LSQUAREBRACKET.value,
-            Operators.LCURLYBRACKET.value,
+    def _eat_constant(self, value: str = None) -> Token:
+        return self._make_token(TokenType.CONSTANT, value)
+
+    def _eat_value(self, value: str = None, meta_data: TokenMetaData = None) -> Token:
+        return self._make_token(TokenType.VALUE, value, meta_data=meta_data)
+
+    def _eat_number(self) -> Token:
+        while (
+            self._char_type == TokenType.NUMBER
+            or self._current_char in OTHER_NUMERIC_CHARACTERS
         ):
-            self.open_bracket = Operators(self.word)
-        return Token(
-            TokenType.OPERATOR,
-            self.reset_word(),
-            self.line_num,
-            self.column,
-            self.indent_level,
+            if self._current_char in OPERATORS_TO_IGNORE:
+                self._skip_char()
+            self._word += self._current_char
+            self._next_char()
+        return self._eat_value(
+            self._reset_word(),
         )
 
-    def eat_type(self) -> Token:
-        while (
-            self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMBER
-        ):
-            if self.current_char == Operators.VALUE_DELIMITER.value:
-                break
-            self.word += self.current_char
-            self.next_char()
-
-        if self.word in self.new_types:
-            return Token(
-                TokenType.TYPE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        if self.word in DataTypes.values():
-            self.current_data_type = DataTypes(self.word)
-            if self.current_key and self.current_data_type == DataTypes.STRUCT:
-                self.new_types.append(self.current_key.value)
-            return Token(
-                TokenType.TYPE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        elif self.current_char == Operators.VALUE_DELIMITER.value:
-            self.next_char()
-            return Token(
-                TokenType.OPERATOR,
-                Operators.VALUE_DELIMITER.value,
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-
-        self.skip_whitespace()
-
-        if self.current_char == Operators.LPAREN.value:
-            self.next_char()
-            self.open_bracket = Operators.LPAREN
-            return Token(
-                TokenType.TYPE,
-                DataTypes.TUPLE.value,
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        if self.current_char == Operators.LSQUAREBRACKET.value:
-            self.next_char()
-            self.open_bracket = Operators.LSQUAREBRACKET
-            return Token(
-                TokenType.TYPE,
-                DataTypes.LIST.value,
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        if self.current_char == Operators.LCURLYBRACKET.value:
-            self.next_char()
-            self.open_bracket = Operators.LCURLYBRACKET
-            return Token(
-                TokenType.TYPE,
-                DataTypes.SET.value,
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        raise SyntaxError("Expected a type or colon character")
-
-    def eat_alpha(self) -> Token:
-        while (
-            self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMBER
-        ):
-            if self.current_char == Operators.VALUE_DELIMITER.value:
-                break
-            self.word += self.current_char
-            self.next_char()
-
-        if self.word in Operators.values():
-            return Token(
-                TokenType.OPERATOR,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-
-        if self.word in DataTypes.values():
-            self.current_data_type = DataTypes(self.word)
-            return Token(
-                TokenType.TYPE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-
-        if self.word in Constants.values():
-            return Token(
-                TokenType.VALUE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-
-        if self.current_data_type is not None:
-            return Token(
-                TokenType.VALUE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-
-        return Token(
-            TokenType.KEY,
-            self.reset_word(),
-            self.line_num,
-            self.column,
-            self.indent_level,
-        )
-
-    def eat_numeric(self) -> Token:
-        if self.current_data_type == DataTypes.COMPLEX:
-            while (
-                self.char_type == TokenType.NUMBER
-                or self.current_char in ("i", "j")
-                or self.current_char == Operators.DOT.value
-                or self.current_char == Operators.MINUS.value
-                and self.peek(1) != Operators.DOT.value
-            ):
-                self.word += self.current_char
-                self.next_char()
-            self.word = self.word.replace('i', 'j')
-            return Token(
-                TokenType.VALUE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        if self.current_data_type == DataTypes.HEX:
-            while (
-                self.char_type == TokenType.NUMBER
-                or self.current_char == Operators.DOT.value
-                or self.current_char in ("a", "b", "c", "d", "e", "f")
-                or self.current_char == Operators.MINUS.value
-                and self.peek(1) != Operators.DOT.value
-            ):
-                self.word += self.current_char
-                self.next_char()
-            return Token(
-                TokenType.VALUE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        if (
-            self.current_data_type == DataTypes.FLOAT
-            or self.current_data_type == DataTypes.DEC
-        ):
-            next_word = self.current_char + self.peek(1) + self.peek(2)
-            if next_word in Constants.values():
-                self.skip_char()
-                self.skip_char()
-                self.skip_char()
-                return Token(
-                    TokenType.VALUE,
-                    next_word,
-                    self.line_num,
-                    self.column,
-                    self.indent_level,
-                )
-            self.pos -= 1
-            return self.eat_string(TokenType.NEWLINE)
-        while (
-            self.char_type == TokenType.NUMBER
-            or self.current_char == Operators.DOT.value
-            or self.current_char == Operators.NUMBER_SEPERATOR.value
-            or self.current_char == Operators.MINUS.value
-            and self.peek(1) != Operators.DOT.value
-        ):
-            self.word += self.current_char
-            self.next_char()
-        return Token(
-            TokenType.VALUE,
-            self.reset_word().replace(Operators.NUMBER_SEPERATOR.value, ""),
-            self.line_num,
-            self.column,
-            self.indent_level,
-        )
-
-    def eat_date(self) -> Token:
-        self.pos -= 1
-        return self.eat_string(TokenType.NEWLINE)
-
-    def eat_ip(self) -> Token:
-        self.pos -= 1
-        return self.eat_string(TokenType.NEWLINE)
-
-    def eat_range(self) -> Token:
-        self.pos -= 1
-        return self.eat_string(TokenType.NEWLINE)
-
-    def eat_constant(self) -> Token:
-        while (
-            self.char_type == TokenType.ALPHANUMERIC
-            or self.char_type == TokenType.NUMBER
-        ):
-            if self.current_char == Operators.VALUE_DELIMITER.value:
-                break
-            self.word += self.current_char
-            self.next_char()
-
-        if self.word in Constants.values():
-            return Token(
-                TokenType.VALUE,
-                self.reset_word(),
-                self.line_num,
-                self.column,
-                self.indent_level,
-            )
-        raise SyntaxError("Unknown Error, expected contstant")
-
-    def eat_escape(self) -> Token:
-        self.reset_word()
-        self.next_char()
-        line_num = self.line_num
-        if self.current_char == TokenType.NEWLINE.value:
-            self.increment_line_num()
-        self.next_char()
-        return Token(
+    def _eat_escape(self) -> Token:
+        self._reset_word()
+        self._next_char()
+        line_num = self._line_num
+        if self._current_char == TokenType.NEWLINE.value:
+            self._increment_line_num()
+        self._next_char()
+        return self._make_token(
             TokenType.ESCAPE,
             TokenType.ESCAPE.value,
             line_num,
-            self.column,
-            self.indent_level,
         )
 
     @staticmethod
-    def get_type(char) -> TokenType:
+    def _get_type(char) -> TokenType:
         if char.isspace():
             return TokenType.WHITESPACE
         if char == TokenType.COMMENT.value:
@@ -552,95 +403,69 @@ class Lexer:
         return TokenType.ALPHANUMERIC
 
     def _get_next_token(self) -> Token:
-        if self.current_char is None:
-            return self.eof()
+        if self._current_char is None:
+            return self._eof()
+
+        if self._current_char == Operators.VALUE_DELIMITER.value:
+            self._skip_char()
+
+        if self._current_char == TokenType.NEWLINE.value:
+            return self._eat_newline()
+        elif self._current_char == TokenType.INDENT.value:
+            self._skip_indent()
+
+        if self._current_char.isspace():
+            self._skip_whitespace()
+
+        if self._current_char == TokenType.COMMENT.value:
+            return self._skip_comment()
 
         if (
-            self.last_token
-            and self.last_token.value == Operators.VALUE_DELIMITER.value
-            and self.current_data_type == DataTypes.STR
-            and self.peek(1, True) != Operators.DOUBLE_QUOTE.value
-            and self.peek(1, True) != Operators.SINGLE_QUOTE.value
+            self._current_data_type is None
+            and self._current_char == Operators.DOT.value
         ):
-            return self.eat_string(TokenType.NEWLINE)
+            return self._eat_type()
 
-        if self.current_char == TokenType.NEWLINE.value:
-            return self.eat_newline()
-        elif self.current_char == TokenType.INDENT.value:
-            return self.eat_indent()
+        if self._current_char == Operators.DOUBLE_QUOTE.value:
+            return self._eat_string(Operators.DOUBLE_QUOTE)
 
-        if self.current_char.isspace():
-            self.skip_whitespace()
+        if self._current_char == Operators.SINGLE_QUOTE.value:
+            return self._eat_string(Operators.SINGLE_QUOTE)
 
-        if self.current_char == TokenType.COMMENT.value:
-            return self.skip_comment()
+        if not self._char_type:
+            self._char_type = self._get_type(self._current_char)
+        if not self._word_type:
+            self._word_type = self._char_type
 
-        if self.open_bracket and self.current_char in (
-            Operators.RPAREN.value,
-            Operators.RSQUAREBRACKET.value,
-            Operators.RCURLYBRACKET.value,
-        ):
-            self.open_bracket = None
-            return self.eat_operator()
+        if self._word_type == TokenType.OPERATOR:
+            return self._eat_operator()
 
-        if self.current_data_type is None and self.current_key is None:
-            return self.eat_key()
-
-        if self.current_data_type is None:
-            return self.eat_type()
-
-        if self.current_data_type is None:
-            print("didn't find a type")
-
-        if (
-            self.current_char == Operators.DOUBLE_QUOTE.value
-            or self.current_char == Operators.SINGLE_QUOTE.value
-        ):
-            return self.eat_string(Operators(self.current_char))
-
-        if not self.char_type:
-            self.char_type = self.get_type(self.current_char)
-        if not self.word_type:
-            self.word_type = self.char_type
-
-        if self.word_type == TokenType.OPERATOR:
-            return self.eat_operator()
-
-        if self.current_data_type in (
-            DataTypes.HEX,
-            DataTypes.OCT,
-            DataTypes.COMPLEX,
-            DataTypes.DEC,
-            DataTypes.FLOAT,
-            DataTypes.INT,
-        ):
-            return self.eat_numeric()
-
-        if self.current_data_type in (
+        if self._current_data_type in (
+            DataTypes.STR,
             DataTypes.DATE,
             DataTypes.DATETIME,
             DataTypes.TIME,
             DataTypes.INTERVAL,
+            DataTypes.URL,
+            DataTypes.IP_ADDRESS,
+            DataTypes.IP_NETWORK,
+            DataTypes.BASE64,
+            DataTypes.BASE64E,
+            DataTypes.RANGE,
         ):
-            return self.eat_date()
+            return self._eat_rest_of_line()
 
-        if self.current_data_type in (DataTypes.IP_ADDRESS, DataTypes.IP_NETWORK):
-            return self.eat_ip()
+        if self._word_type == TokenType.ALPHANUMERIC:
+            return self._eat_alpha()
 
-        if self.current_data_type == DataTypes.RANGE:
-            return self.eat_range()
+        if self._current_key is None:
+            return self._eat_key()
 
-        if self.word_type == TokenType.CONSTANT:
-            return self.eat_constant()
+        if self._word_type == TokenType.NUMBER:
+            return self._eat_number()
 
-        if self.word_type == TokenType.ALPHANUMERIC:
-            return self.eat_alpha()
-
-        if self.word_type == TokenType.NUMBER:
-            return self.eat_numeric()
-
-        if self.char_type == TokenType.ESCAPE:
-            return self.eat_escape()
+        if self._char_type == TokenType.ESCAPE:
+            return self._eat_escape()
 
         raise SyntaxError("Unknown character")
 
@@ -648,22 +473,12 @@ class Lexer:
         token = self._get_next_token()
         while token.type != TokenType.EOF:
             yield token
-            self.last_token = token
             token = self._get_next_token()
         yield token
-
-    def get_next_token(self) -> Token:
-        self.last_token = self._current_token
-        self._current_token = self._get_next_token()
-        return self._current_token
 
 
 if __name__ == "__main__":
     file = Path("../test.thsl")
-    lexer = Lexer(file.open().read(), file)
+    lexer = Lexer(file.open().read())
     for t in lexer.analyze():
-        if t.type == TokenType.NEWLINE:
-            print(t)
-            print()
-        else:
-            print(t, end=" | ")
+        print(t)

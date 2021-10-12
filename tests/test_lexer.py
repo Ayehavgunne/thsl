@@ -50,6 +50,9 @@ def test_key(lexer, config, expected_key):
     ("config",),
     (
         ("my_value .int: 1\n",),
+        ("my_value .int : 1\n",),
+        ("my_value .int  1\n",),
+        ("my_value .int    1\n",),
         ("'my_value' .int: 1\n",),
         ('"my_value" .int: 1\n',),
         ("' my_value' .int: 1\n",),
@@ -85,21 +88,23 @@ def test_type(lexer, config):
     ("config", "expected_key", "index"),
     (
         ("my_value .bytes: 1110101\n", "1110101", 2),
+        ("my_value .bytes  1110101\n", "1110101", 2),
+        ("my_value .bytes    1110101\n", "1110101", 2),
         ("my_value .bytes: 1110101 # comment\n", "1110101", 2),
         ("my_value .int: 1\n", "1", 2),
         ("my_value .int: '1'\n", "1", 2),
         ('my_value .int: "1"\n', "1", 2),
-        ("my_value .int: -1\n", "1", 3),
+        ("my_value .int: -1\n", "-1", 2),
         ("my_value .int: 100_000_000\n", "100000000", 2),
         ("my_value .float: 1\n", "1", 2),
         ("my_value .float: 1.000_000_000\n", "1.000000000", 2),
         ("my_value .float: 1.0\n", "1.0", 2),
-        ("my_value .float: -1.0\n", "1.0", 3),
+        ("my_value .float: -1.0\n", "-1.0", 2),
         ("my_value .float: 1.3e-4\n", "1.3e-4", 2),
         ("my_value .dec: 4\n", "4", 2),
         ("my_value .dec: 1.000_000_000\n", "1.000000000", 2),
         ("my_value .dec: 1.0\n", "1.0", 2),
-        ("my_value .dec: -1.0\n", "1.0", 3),
+        ("my_value .dec: -1.0\n", "-1.0", 2),
         ("my_value .dec: 1.3e-4\n", "1.3e-4", 2),
         ("my_value .complex: 3-2i\n", "3-2i", 2),
         ("my_value .hex: deadbeef\n", "deadbeef", 2),
@@ -174,6 +179,14 @@ string is
             2,
         ),
         ("my_value .env: PATH\n", "PATH", 2),
+        ("my_value .bool: false\n", "false", 2),
+        ("my_value .bool: true\n", "true", 2),
+        ("my_value .float: inf\n", "inf", 2),
+        ("my_value .float: -inf\n", "-inf", 2),
+        ("my_value .float: nan\n", "nan", 2),
+        ("my_value .dec: inf\n", "inf", 2),
+        ("my_value .dec: -inf\n", "-inf", 2),
+        ("my_value .dec: nan\n", "nan", 2),
     ),
 )
 def test_value(lexer, config, expected_key, index):
@@ -190,36 +203,17 @@ def test_value(lexer, config, expected_key, index):
 
 
 @pytest.mark.parametrize(
-    ("config", "expected_key", "index"),
-    (
-        ("my_value .bool: false\n", "false", 2),
-        ("my_value .bool: true\n", "true", 2),
-        ("my_value .float: inf\n", "inf", 2),
-        ("my_value .float: -inf\n", "inf", 3),
-        ("my_value .float: nan\n", "nan", 2),
-        ("my_value .dec: inf\n", "inf", 2),
-        ("my_value .dec: -inf\n", "inf", 3),
-        ("my_value .dec: nan\n", "nan", 2),
-    ),
-)
-def test_constant(lexer, config, expected_key, index):
-    lexer.text = config
-    expected = Token(
-        type=TokenType.CONSTANT,
-        value=expected_key,
-        line=1,
-        indent=0,
-    )
-    actual = list(lexer.analyze())
-    assert actual[index] == expected
-
-
-@pytest.mark.parametrize(
     ("config", "expected_key"),
     (
         (
             """graphics:
 \ttarget_framerate .int: 60
+""",
+            "false",
+        ),
+        (
+            """graphics
+\ttarget_framerate .int 60
 """,
             "false",
         ),
@@ -246,7 +240,7 @@ def test_tokenization(lexer):
     expected = [
         Token(type=TokenType.KEY, value="my_value", line=1, indent=0),
         Token(type=TokenType.TYPE, value="bool", line=1, indent=0),
-        Token(type=TokenType.CONSTANT, value="false", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="false", line=1, indent=0),
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
     ]

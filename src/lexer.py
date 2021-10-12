@@ -4,7 +4,6 @@ from typing import Optional, Iterator, Literal
 
 from src.grammar import (
     TokenType,
-    Constants,
     DataTypes,
     Operators,
     OPERATORS_TO_IGNORE,
@@ -249,6 +248,11 @@ class Lexer:
     def _eat_operator(self, value: str = None) -> Token:
         if value:
             return self._make_token(TokenType.OPERATOR, value)
+        if self._current_char == Operators.MINUS.value:
+            if self._get_type(self._peek(1)) == TokenType.ALPHANUMERIC:
+                return self._eat_rest_of_line()
+            else:
+                return self._eat_number()
         while self._current_char in Operators.values():
             self._word += self._current_char
             self._next_char()
@@ -331,8 +335,6 @@ class Lexer:
                 token = self._eat_operator(self._reset_word())
             self._current_operator = Operators(self._word)
             return token
-        elif self._word in Constants.values():
-            return self._eat_constant(self._reset_word())
         elif self._current_data_type:
             return self._eat_value(self._reset_word())
         else:
@@ -394,8 +396,6 @@ class Lexer:
             return TokenType.ESCAPE
         if char in Operators.values():
             return TokenType.OPERATOR
-        if char in Constants.values():
-            return TokenType.CONSTANT
         if char.isdigit():
             return TokenType.NUMBER
         if char == "":
@@ -475,6 +475,9 @@ class Lexer:
             yield token
             token = self._get_next_token()
         yield token
+
+    def parse(self) -> list[Token]:
+        return list(self.analyze())
 
 
 if __name__ == "__main__":

@@ -9,6 +9,9 @@ name_quotes .str: " My name"  # but they can use quotes if you don't want to tri
 name_single_quotes .str: 'My name is {name}'  # single quotes allow templating
 escaping .str: " My \"Name"
 
+# currently the colon is not required but it helps with readability
+less_readable .int -3
+
 # curly braces need escaping to be included in single quotes
 escaping_single_quotes .str: 'My name is \{{name}\}'
 

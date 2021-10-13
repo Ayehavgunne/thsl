@@ -2,7 +2,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
-from src.thsl_ast import Collection, Key, Value, AST, Void
+from src.abstract_syntax_tree import Collection, Key, Value, AST, Void
 from src.grammar import TokenType, DataTypes, Operators
 from src.lexer import Lexer, Token
 

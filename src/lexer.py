@@ -335,23 +335,6 @@ class Lexer:
                 raise SyntaxError
             self._type_stack.pop()
         return token
-        # if (
-        #     self.word in MULTI_CHAR_OPERATORS
-        #     and self.preview_token(1).value in MULTI_CHAR_OPERATORS
-        # ):
-        #     self.next_char()
-        #     self.word += " "
-        #     while (
-        #             self.char_type == TokenType.ALPHANUMERIC
-        #             or self.char_type == TokenType.NUMBER
-        #     ):
-        #         self.word += self.current_char
-        #         self.next_char()
-        #     token = self.make_token(TokenType.OPERATOR, self.reset_word())
-        # else:
-        #     token = self.make_token(TokenType.OPERATOR, self.reset_word())
-        # self._current_operator = Operators(self.word)
-        # return token
 
     def _eat_type(self, value: str = None) -> Token:
         if value:

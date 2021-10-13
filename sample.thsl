@@ -42,6 +42,8 @@ string is
 int .int: 1
 str .str: str
 
+my_num .int: "-50" # even if the value is in quotes it will be cast to the correct type
+
 1 .str: one  # keys will always end up as strings
 
 some_bytes .bytes: 1110101

@@ -14,7 +14,7 @@ from dateutil import parser as dateutil
 
 from src.grammar import DataTypes
 from src.parser import Parser
-from src.thsl_ast import Key, Value, Collection, Void
+from src.abstract_syntax_tree import Key, Value, Collection, Void
 
 
 class Compiler:

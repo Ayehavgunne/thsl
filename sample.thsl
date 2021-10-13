@@ -1,13 +1,11 @@
 # comments use a # (pound sign, hash)
-
 # all root values get serialized into single dictionary
-
 debug .bool: false
 num .int: -3
 name .str: Frank Drebin  # strings don't need quotes and will be left/right trimmed of whitespace
 name_quotes .str: " My name"  # but they can use quotes if you don't want to trim the whitespace
 name_single_quotes .str: 'My name is {name}'  # single quotes allow templating
-escaping .str: " My \"Name"
+escaping .str: "My \"Name "
 
 # currently the colon is not required but it helps with readability
 less_readable .int -3
@@ -17,10 +15,12 @@ escaping_single_quotes .str: 'My name is \{{name}\}'
 
 # types are preceded by a . (dot, period) to allow for seamlessly adding new ones in the future
 
+# dicts are assumed when no type is provided and indentation increases one level
+# so far this is the only type inference that is allowed
 graphics:
 	target_framerate .int: 60
 	fullscreen .bool: false
-	resolution .dict:
+	resolution .dict:  # the dict type can still be provided though
 		width .int: 1920
 		height .int: 1080
 	key .str  # defaults to empty string
@@ -74,6 +74,13 @@ uniform_list .int: [  # list entries are delimeted by a return character and use
 	7
 ]
 
+a_set .int: <
+	1
+	2
+	3
+>
+set_one_liner .int: <1, 2, 3>
+
 complex_list .dict: [
 	things:
 		one .int: 1
@@ -108,11 +115,8 @@ named_tuple: (
 	three .float: 3.0
 )
 
-tuple_one_liner: (.int:1,.float:2)  # spaces are not required between entries or key-values
-
-# a non-uniform set is similar to the list variety
-
-set_one_liner .int: {1, 2, 3}
+# spaces are not required between entries or key-values but they sure do help readability
+tuple_one_liner: (.int:1,.float:2)
 
 dict_one_liner: {one .int: 1, two .float: 2}
 
@@ -156,8 +160,6 @@ some_data .struct:
 
 	@optional
 	my_age .int
-
-# allow inheritance
 
 #Config .struct:
 #	debug .bool: false

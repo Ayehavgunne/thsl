@@ -3,39 +3,82 @@ import ipaddress
 import os
 import struct
 import urllib.parse
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from pprint import pprint
-from typing import Any
+from typing import Any, Optional
 
 import tempora
 from dateutil import parser as dateutil
 
 from src.grammar import DataTypes
 from src.parser import Parser
-from src.thsl_ast import Key, Value, Collection
+from src.thsl_ast import Key, Value, Collection, Void
 
 
 class Compiler:
-    def __init__(self, file_path: Path):
-        parser = Parser(file_path)
-        self.tree = parser.parse()
+    def __init__(self, file_path: Path | str):
+        self._parser = Parser(file_path)
+        self.tree = self._parser.parse()
+        self._current_key: Optional[Key] = None
 
-    def visit(self, current_node: Collection = None) -> dict:
-        root = {}
+    @property
+    def user_types(self) -> list[str]:
+        return self._parser.user_types
+
+    def _visit(self, current_node: Collection = None) -> Any:
         if current_node is None:
             current_node = self.tree
+        root = self.cast_compound(current_node.type)
         for item in current_node.items:
+            if isinstance(item, Key):
+                self._current_key = item
             match item:
                 case Key(items=Value()) as key:
                     root[key.name] = self.cast_scalar(key.items.value, key.type)
-                case Key(items=Collection()) as key:
-                    root[key.name] = self.visit(key.items)
+                case Key(items=Collection(
+                    type=(
+                        DataTypes.DICT
+                        | DataTypes.LIST
+                        | DataTypes.SET
+                        | DataTypes.TUPLE
+                    )
+                )) as key:
+                    root[key.name] = self._visit(key.items)
+                case Value() as value:
+                    match root:
+                        case list():
+                            root.append(
+                                self.cast_scalar(value.value, self._current_key.type)
+                            )
+                        case set():
+                            root.add(
+                                self.cast_scalar(value.value, self._current_key.type)
+                            )
+                        case tuple():
+                            root = (
+                                *root,
+                                self.cast_scalar(value.value, self._current_key.type)
+                            )
         return root
 
     @staticmethod
-    def cast_scalar(value: str, cast_type: DataTypes) -> Any:
+    def cast_compound(collection_type: DataTypes) -> Any:
+        match collection_type:
+            case DataTypes.DICT:
+                return {}
+            case DataTypes.LIST:
+                return []
+            case DataTypes.SET:
+                return set()
+            case DataTypes.TUPLE:
+                return tuple()
+
+    def cast_scalar(self, value: str | Void, cast_type: DataTypes) -> Any:
         result = None
+        if value == Void:
+            return self.get_default_value(cast_type)
         match cast_type:
             case DataTypes.ANY:
                 return value
@@ -96,9 +139,64 @@ class Compiler:
                 result = os.getenv(value)
         return result
 
+    def get_default_value(self, cast_type: DataTypes) -> Any:
+        match cast_type:
+            case DataTypes.ANY:
+                return None  # maybe raise exception
+            case DataTypes.INT:
+                return 0
+            case DataTypes.STR:
+                return ""
+            case DataTypes.CHAR:
+                return ""
+            case DataTypes.DEC:
+                return Decimal("0")
+            case DataTypes.FLOAT:
+                return float(0)
+            case DataTypes.HEX:
+                return hex(0)
+            case DataTypes.OCT:
+                return oct(0)
+            case DataTypes.COMPLEX:
+                return complex("0")
+            case DataTypes.BASE64:
+                return ""
+            case DataTypes.BASE64E:
+                return bytes("".encode('utf-8'))
+            case DataTypes.BOOL:
+                return False
+            case DataTypes.BYTES:
+                return bytes("".encode('utf-8'))
+            case DataTypes.DATETIME:
+                return datetime.now()
+            case DataTypes.DATE:
+                return datetime.now().date()
+            case DataTypes.TIME:
+                return datetime.now().time()
+            case DataTypes.INTERVAL:
+                return timedelta(seconds=0)
+            case DataTypes.IP_ADDRESS:
+                return ipaddress.ip_address("0.0.0.0")
+            case DataTypes.IP_NETWORK:
+                return ipaddress.ip_network("0.0.0.0/1")
+            case DataTypes.URL:
+                return urllib.parse.urlparse("")
+            case DataTypes.RANGE:
+                return range(1)
+            case DataTypes.ENV:
+                return ""
+            case DataTypes.DICT | DataTypes.LIST | DataTypes.SET | DataTypes.TUPLE:
+                return {}
+        raise NotImplementedError(
+            f"Still need to add default for type {cast_type.value}"
+        )
+
+    def compile(self) -> dict:
+        return self._visit()
+
 
 if __name__ == "__main__":
     file = Path('../test.thsl')
     compiler = Compiler(file)
-    data = compiler.visit()
+    data = compiler.compile()
     pprint(data)

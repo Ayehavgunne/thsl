@@ -63,7 +63,8 @@ ip_address .ip: 192.168.1.1
 ip_network .network: 192.168.0.0/28
 my_page .url: http://www.example.com/index.html
 env_var .env: PATH
-
+range_example .range: 1..5  # non-inclusive
+inclusive_example .range: 1...5  # inclusive
 number_sep .int: 100_000_000  # numbers support seperators
 
 uniform_list .int: [  # list entries are delimeted by a return character and use square brackets
@@ -73,7 +74,7 @@ uniform_list .int: [  # list entries are delimeted by a return character and use
 	7
 ]
 
-complex_list: [
+complex_list .dict: [
 	things:
 		one .int: 1
 		two .int: 2
@@ -92,7 +93,9 @@ heterogeneous_list: [
 uniform_list_one_liner .int: [1, 2, 3,]  # trailing commas are valid
 heterogeneous_list_one_liner: [.int: 1, .float: 3.14159, .dec: 2.11, .str: hello]
 
-a_tuple: (  # tuples use parentheses and need each items type defined
+simple_tuple .int: (1, 2, 3)
+
+typed_tuple: (
 	.int: 1
 	.float: 2
 	.dec: 3
@@ -107,15 +110,6 @@ named_tuple: (
 
 tuple_one_liner: (.int:1,.float:2)  # spaces are not required between entries or key-values
 
-range_example .range: 1..5  # non-inclusive
-inclusive_example .range: 1...5  # inclusive
-
-a_uniform_set .int: {  # sets use curly braces but don't have keys
-	1
-	3
-	# 3  # another 3 is not allowed!
-	4
-}
 # a non-uniform set is similar to the list variety
 
 set_one_liner .int: {1, 2, 3}

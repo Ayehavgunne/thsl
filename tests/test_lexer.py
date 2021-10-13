@@ -42,7 +42,7 @@ def test_key(lexer, config, expected_key):
         line=1,
         indent=0,
     )
-    actual = list(lexer.analyze())
+    actual = lexer.parse()
     assert actual[0] == expected
 
 
@@ -80,7 +80,7 @@ def test_type(lexer, config):
         line=1,
         indent=0,
     )
-    actual = list(lexer.analyze())
+    actual = lexer.parse()
     assert actual[1] == expected
 
 
@@ -140,17 +140,13 @@ def test_type(lexer, config):
             "Hello my name is Frank Drebin ",
             2,
         ),
-        # .str: "This
-        # string is
-        #     on multiple
-        #          lines.
-        # "
         (
             """my_value .str: "This
 string is
     on multiple
          lines.
-"\n""",
+"
+""",
             "This\nstring is\n    on multiple\n         lines.\n",
             2,
         ),
@@ -197,7 +193,7 @@ def test_value(lexer, config, expected_key, index):
         line=1,
         indent=0,
     )
-    actual = list(lexer.analyze())
+    actual = lexer.parse()
     expected.line = actual[index].line
     assert actual[index] == expected
 
@@ -230,7 +226,58 @@ def test_nesting(lexer, config, expected_key):
         Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
         Token(type=TokenType.EOF, value="EOF", line=3, indent=0),
     ]
-    actual = list(lexer.analyze())
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_list(lexer):
+    lexer.text = """my_list .int: [  # comment
+\t1
+\t2
+\t4
+\t# hello
+\t7
+]
+"""
+    expected = [
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="[", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="2", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="4", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.VALUE, value="7", line=6, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=1),
+        Token(type=TokenType.OPERATOR, value="]", line=7, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=7, indent=0),
+        Token(type=TokenType.EOF, value="EOF", line=8, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_one_line_list(lexer):
+    lexer.text = "my_list .int: [1, 2, 3,]\n"
+    expected = [
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="[", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="1", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="2", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="3", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="]", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
+    ]
+    actual = lexer.parse()
     assert actual == expected
 
 
@@ -244,5 +291,5 @@ def test_tokenization(lexer):
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
     ]
-    actual = list(lexer.analyze())
+    actual = lexer.parse()
     assert actual == expected

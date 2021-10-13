@@ -17,6 +17,8 @@ graphics:
 
 Indentation is done via tabs only
 
+See [sample.thsl](sample.thsl) for more.
+
 ## Features
 Not finalized. Subject to change
 
@@ -24,15 +26,16 @@ Not finalized. Subject to change
 - [x] Type safety (avoids the
 [Norway](https://hitchdev.com/strictyaml/why/implicit-typing-removed/) problem)
 - [x] Comments
-- Trailing Commas
+- [x] Trailing Commas
 - Validation
 - String templating
 - Compound Types
-  - Dictionaries
-  - Lists
-  - Sets
+  - [x] Dictionaries
+  - [x] Lists
+  - [x] Sets
   - Tuples
-    - Regular variety
+    - [x] Simple Tuples
+    - Heterogeneous Tuples
     - Named Tuples
   - Structs
   - Enums
@@ -80,7 +83,11 @@ Not finalized. Subject to change
 #### Maybe
 - YAML and JSON output
   - conversion would be lossy unless only compatible types are used
+- YAML or JSON input
 - zlib (de)compression
+- regex
+- semantic version numbers
+- type addon system
 
 ## Benefits
 With a grammar that is powerful enough to represent most language structures from a
@@ -109,20 +116,19 @@ have to keep their models in sync. With thsl you can decouple the data structure
 maintain it in one place.
 
 ## Lexer TODO:
-- [x] scientific notation
-- [x] date/times
-- [x] ranges
 - [ ] heterogeneous lists
-- [ ] single line dicts
-- [ ] regular tuples
-- [ ] single line tuples
+- [ ] heterogeneous tuples
+- [ ] heterogeneous sets
 - [ ] decorators
-- [ ] fix `value=',]'` with trailing comma
+- [ ] type aliases
+- [ ] interfaces
 
 ## Parser TODO:
-- [x] start
-- [x] nesting
-- [x] set fields without a value to a sane default that is not null
+- [ ] enums
+- [ ] single line dicts
+- [ ] named tuples
+
+## Compiler TODO:
 - [ ] string templating
 
 ## Other TODO:

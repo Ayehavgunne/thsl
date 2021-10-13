@@ -66,6 +66,8 @@ class Operators(EnumDict):
     RSQUAREBRACKET = "]"
     LCURLYBRACKET = "{"
     RCURLYBRACKET = "}"
+    LANGLEBRACKET = "<"
+    RANGLEBRACKET = ">"
     LIST_DELIMITER = ","
     DOT = "."
     RANGE = ".."

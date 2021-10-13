@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Union, Optional
 
 from src.grammar import DataTypes, Operators
 
@@ -46,7 +45,7 @@ class Collection(AST):
 class Key(AST):
     name: str
     type: DataTypes
-    items: Union[Value, Collection]
+    items: Value | Collection
 
 
 @dataclass

@@ -1,2 +1,0 @@
-graphics .dict:
-	target_framerate .int: 60

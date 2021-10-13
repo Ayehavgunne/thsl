@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Iterator, Literal
 
@@ -37,6 +38,35 @@ class Token:
         )
 
 
+class TypeState(Enum):
+    DICT = auto()
+    LIST = auto()
+    SET = auto()
+    TUPLE = auto()
+
+
+@dataclass
+class Homogeneous:
+    type: DataTypes
+
+
+@dataclass
+class Heterogeneous:
+    def __eq__(self, other) -> bool:
+        if self.__class__ == other:
+            return True
+        return super().__eq__(other)
+
+
+TypeContentState = Homogeneous | Heterogeneous
+
+
+@dataclass
+class LexarState:
+    type: TypeState = TypeState.DICT
+    contents: TypeContentState = Heterogeneous
+
+
 class Lexer:
     def __init__(self, text: str) -> None:
         self._pos: int
@@ -46,12 +76,12 @@ class Lexer:
         self._current_token: Optional[Token]
         self._current_data_type: Optional[DataTypes]
         self._current_key: Optional[Token]
-        self._current_operator: Optional[Operators]
         self._word: str
         self._word_type: Optional[TokenType]
         self._line_num: int
         self._indent_level: int
-        self.new_types: list[str]
+        self._type_stack = [LexarState()]
+        self.user_types: list[str]
         self.text = text
 
     @property
@@ -72,8 +102,11 @@ class Lexer:
         self._current_token = None
         self._current_data_type = None
         self._current_key = None
-        self._current_operator = None
-        self.new_types = []
+        self.user_types = []
+
+    @property
+    def _current_state(self) -> LexarState:
+        return self._type_stack[-1]
 
     def _make_token(
         self,
@@ -247,20 +280,61 @@ class Lexer:
 
     def _eat_operator(self, value: str = None) -> Token:
         if value:
-            return self._make_token(TokenType.OPERATOR, value)
-        if self._current_char == Operators.MINUS.value:
-            if self._get_type(self._peek(1)) == TokenType.ALPHANUMERIC:
-                return self._eat_rest_of_line()
+            token = self._make_token(TokenType.OPERATOR, value)
+        else:
+            if (
+                self._current_char in MULTI_CHAR_OPERATORS
+                and self.preview_token(1).value in MULTI_CHAR_OPERATORS
+            ):
+                self._next_char()
+                self._word += " "
+                while (
+                    self._char_type == TokenType.ALPHANUMERIC
+                    or self._char_type == TokenType.NUMBER
+                ):
+                    self._word += self._current_char
+                    self._next_char()
+                token = self._make_token(TokenType.OPERATOR, self._reset_word())
             else:
-                return self._eat_number()
-        while self._current_char in Operators.values():
-            self._word += self._current_char
-            self._next_char()
-        self._current_operator = Operators(self._word)
-        return self._make_token(
-            TokenType.OPERATOR,
-            self._reset_word(),
-        )
+                if self._current_char in Operators.values():
+                    self._word += self._current_char
+                    self._next_char()
+                token = self._make_token(
+                    TokenType.OPERATOR,
+                    self._reset_word(),
+                )
+
+        if self._current_data_type:
+            type_content_state = Homogeneous(self._current_data_type)
+        else:
+            type_content_state = Heterogeneous()
+
+        if token.value == Operators.LSQUAREBRACKET.value:
+            self._type_stack.append(LexarState(TypeState.LIST, type_content_state))
+        if token.value == Operators.LANGLEBRACKET.value:
+            self._type_stack.append(LexarState(TypeState.SET, type_content_state))
+        if token.value == Operators.LCURLYBRACKET.value:
+            self._type_stack.append(LexarState(TypeState.DICT, type_content_state))
+        if token.value == Operators.LPAREN.value:
+            self._type_stack.append(LexarState(TypeState.TUPLE, type_content_state))
+
+        if token.value == Operators.RSQUAREBRACKET.value:
+            if self._current_state.type != TypeState.LIST:
+                raise SyntaxError
+            self._type_stack.pop()
+        if token.value == Operators.RANGLEBRACKET.value:
+            if self._current_state.type != TypeState.SET:
+                raise SyntaxError
+            self._type_stack.pop()
+        if token.value == Operators.RCURLYBRACKET.value:
+            if self._current_state.type != TypeState.DICT:
+                raise SyntaxError
+            self._type_stack.pop()
+        if token.value == Operators.RPAREN.value:
+            if self._current_state.type != TypeState.TUPLE:
+                raise SyntaxError
+            self._type_stack.pop()
+        return token
         # if (
         #     self.word in MULTI_CHAR_OPERATORS
         #     and self.preview_token(1).value in MULTI_CHAR_OPERATORS
@@ -295,14 +369,14 @@ class Lexer:
 
         self._current_data_type = DataTypes(self._word)
 
-        if self._word in self.new_types:
+        if self._word in self.user_types:
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
             )
         if self._word in DataTypes.values():
             if self._current_key and self._current_data_type == DataTypes.STRUCT:
-                self.new_types.append(self._current_key.value)
+                self.user_types.append(self._current_key.value)
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
@@ -317,24 +391,10 @@ class Lexer:
             self._word += self._current_char
             self._next_char()
 
-        if self._word in Operators.values():
-            if (
-                self._word in MULTI_CHAR_OPERATORS
-                and self.preview_token(1).value in MULTI_CHAR_OPERATORS
-            ):
-                self._next_char()
-                self._word += " "
-                while (
-                    self._char_type == TokenType.ALPHANUMERIC
-                    or self._char_type == TokenType.NUMBER
-                ):
-                    self._word += self._current_char
-                    self._next_char()
-                token = self._eat_operator(self._reset_word())
-            else:
-                token = self._eat_operator(self._reset_word())
-            self._current_operator = Operators(self._word)
-            return token
+        if self._current_data_type in (DataTypes.FLOAT, DataTypes.DEC):
+            return self._eat_number()
+        elif self._word in Operators.values():
+            return self._eat_operator()
         elif self._current_data_type:
             return self._eat_value(self._reset_word())
         else:
@@ -394,6 +454,8 @@ class Lexer:
             return TokenType.COMMENT
         if char == TokenType.ESCAPE.value:
             return TokenType.ESCAPE
+        if char == Operators.MINUS.value:
+            return TokenType.ALPHANUMERIC
         if char in Operators.values():
             return TokenType.OPERATOR
         if char.isdigit():
@@ -403,6 +465,14 @@ class Lexer:
         return TokenType.ALPHANUMERIC
 
     def _get_next_token(self) -> Token:
+        if (
+                self._current_char == Operators.LIST_DELIMITER.value
+                and self._peek(1) == Operators.LIST_DELIMITER.value
+        ):
+            raise SyntaxError(
+                f"Exected value line={self._line_num} column={self._column + 1}"
+            )
+
         if self._current_char is None:
             return self._eof()
 
@@ -458,6 +528,11 @@ class Lexer:
         if self._word_type == TokenType.ALPHANUMERIC:
             return self._eat_alpha()
 
+        if self._current_state.type == TypeState.LIST:
+            if self._current_state.contents != Heterogeneous:
+                if self._word_type == TokenType.NUMBER:
+                    return self._eat_number()
+
         if self._current_key is None:
             return self._eat_key()
 
@@ -483,5 +558,5 @@ class Lexer:
 if __name__ == "__main__":
     file = Path("../test.thsl")
     lexer = Lexer(file.open().read())
-    for t in lexer.analyze():
+    for t in lexer.parse():
         print(t)

@@ -1,6 +1,7 @@
 # thsl (Thistle)
 ### Typed Human-friendly Serialization Language
-A typed configuration and serialization format. Imagine YAML crossed with Protobufs.
+A typed configuration language and serialization format. Imagine YAML crossed with
+Protobufs.
 
 ## Example
 ```
@@ -19,10 +20,10 @@ Indentation is done via tabs only
 ## Features
 Not finalized. Subject to change
 
-- YAML like syntax
-- Type safety (avoids the
+- [x] YAML like syntax
+- [x] Type safety (avoids the
 [Norway](https://hitchdev.com/strictyaml/why/implicit-typing-removed/) problem)
-- Comments
+- [x] Comments
 - Trailing Commas
 - Validation
 - String templating

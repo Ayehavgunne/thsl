@@ -1,8 +1,44 @@
-stuff:
-	hi .str: hello
-	what:
-		more .str: greatings
-		things:
-			nesting .str: yes
-		food .str: wfs
-	hey .str: goon
+debug .bool: false
+num .int: -3
+name .str: Frank Drebin
+name_quotes .str: " My name"
+name_single_quotes .str: 'My name is {name}'
+escaping .str: " My \"Name"
+less_readable .int -3
+escaping_single_quotes .str: 'My name is \{{name}\}'
+graphics:
+	target_framerate .int: 60
+	fullscreen .bool: false
+	resolution:
+		width .int: 1920
+		height .int: 1080
+a_char .char: a
+multi_line_str .str: "This
+string is
+    on multiple
+         lines.
+"
+"keys can be in quotes" .int: 1
+int .int: 1
+str .str: str
+1 .str: one
+some_bytes .bytes: 1110101
+a_complex .complex: 3-2i
+a_decimal .dec: 4.2
+infinity .float: inf
+neg_infinity .float: -inf
+not_a_number .dec: nan
+sci_note .float: 1.3e-4
+hexadecimal .hex: deadbeef
+octal .oct: 7
+base_64 .base64: VGhlIFNwYW5pc2ggSW5xdWlzaXRpb24h
+base_64_encode .base64e: Encode this string to base64
+birthday .date: 1986-02-10
+new_year .datetime: 2020-01-01 12:00:00 -6
+my_interval .interval: 1.76 hour
+alarm .time: 08:10:30AM
+ip_address .ip: 192.168.1.1
+ip_network .network: 192.168.0.0/28
+my_page .url: http://www.example.com/index.html
+env_var .env: PATH
+number_sep .int: 100_000_000

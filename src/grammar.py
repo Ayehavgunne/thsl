@@ -56,14 +56,6 @@ COMPOUND_TYPES = (
 )
 
 
-class Constants(EnumDict):
-    TRUE = "true"
-    FALSE = "false"
-    NAN = "nan"
-    INF = "inf"
-    NEGATIVE_INF = "-inf"
-
-
 class Operators(EnumDict):
     DECORATOR = "@"
     VALUE_DELIMITER = ":"
@@ -104,7 +96,6 @@ class TokenType(EnumDict):
     TYPE = "TYPE"
     NUMBER = "NUMBER"
     OPERATOR = "OPERATOR"
-    CONSTANT = "CONSTANT"
     COMMENT = "#"
     NEWLINE = "\n"
     INDENT = "\t"

@@ -2,9 +2,9 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
-from src.abstract_syntax_tree import Collection, Key, Value, AST, Void
-from src.grammar import TokenType, DataTypes, Operators
-from src.lexer import Lexer, Token
+from thsl.src.abstract_syntax_tree import Collection, Key, Value, AST, Void
+from thsl.src.grammar import TokenType, DataTypes, Operators
+from thsl.src.lexer import Lexer, Token
 
 
 class Parser:
@@ -112,6 +112,8 @@ class Parser:
         self.next_token()
         key_type = self.eat_type()
         self.next_token()
+        if key_type == DataTypes.DICT and self.type == TokenType.NEWLINE:
+            self.next_token()
         if self.type == TokenType.OPERATOR:
             value = self.eat_operator()
         elif self.indent > self._indent:
@@ -173,6 +175,6 @@ class Parser:
 
 
 if __name__ == "__main__":
-    file = Path("../test.thsl")
+    file = Path("../../test.thsl")
     parser = Parser(file)
     pprint(parser.parse())

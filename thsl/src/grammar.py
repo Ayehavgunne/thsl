@@ -34,6 +34,9 @@ class DataTypes(EnumDict):
     IP_NETWORK = "network"
     URL = "url"
     ENV = "env"
+    PATH = "path"
+    SEMVER = "semver"
+    REGEX = "regex"
 
     LIST = "list"
     SET = "set"

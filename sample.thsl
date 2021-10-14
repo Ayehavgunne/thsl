@@ -8,7 +8,7 @@ name_single_quotes .str: 'My name is {name}'  # single quotes allow templating
 escaping .str: "My \"Name "
 
 # currently the colon is not required but it helps with readability
-less_readable .int -3
+less_readable .int 3
 
 # curly braces need escaping to be included in single quotes
 escaping_single_quotes .str: 'My name is \{{name}\}'
@@ -25,7 +25,10 @@ graphics:
 		height .int: 1080
 	key .str  # defaults to empty string
 	key_without_value .float  # defaults to 0
-# null is not an option by default, a nullable decorator is available to mark as such
+
+	# null is not an option by default, a nullable decorator is available to mark as such
+	@nullable
+	nullable_key .float  # will be null
 # indentation has to be a tab
 
 a_char .char: a  # can only be a single character
@@ -36,7 +39,7 @@ string is
          lines.
 "
 
-"keys can be in quotes" .int: 1  # for keys to have spaces it must be in quotes
+"keys can be in quotes" .int: 1  # for a key to have spaces it must be in quotes
 
 # no need to worry about using type identifiers as keys or values
 int .int: 1
@@ -124,16 +127,15 @@ dict_one_liner: {one .int: 1, two .float: 2}
 
 # structs are very similar to dictionaries but can be handled differently by the consuming language
 # Python could create a dataclass for example
-# either dynamically or human readable code can be generated
+# either dynamically or human-readable code can be generated
 MyStruct .struct:
-	nested_struct .struct:
+	NestedStruct .struct:
 		first .int: 1  # provided values will be defaults for a struct
 		second .int: 2
-	enum_dict .dict:  # dict type is optional
+	my_dict:
 		third .float: 3
 		fourth: .str: 4
 	key .str: value
-	key_without_value .float
 	recursion .MyStruct  # maybe, maybe not
 
 AnotherStruct .struct:

@@ -9,12 +9,14 @@ from pathlib import Path
 from pprint import pprint
 from typing import Any, Optional
 
+import re
+import semantic_version
 import tempora
 from dateutil import parser as dateutil
 
-from src.grammar import DataTypes
-from src.parser import Parser
-from src.abstract_syntax_tree import Key, Value, Collection, Void
+from thsl.src.grammar import DataTypes
+from thsl.src.parser import Parser
+from thsl.src.abstract_syntax_tree import Key, Value, Collection, Void
 
 
 class Compiler:
@@ -137,6 +139,12 @@ class Compiler:
                     result = range(int(value[0]), int(value[-1]))
             case DataTypes.ENV:
                 result = os.getenv(value)
+            case DataTypes.PATH:
+                result = Path(value)
+            case DataTypes.SEMVER:
+                result = semantic_version.Version(value)
+            case DataTypes.REGEX:
+                result = re.compile(value)
         return result
 
     def get_default_value(self, cast_type: DataTypes) -> Any:
@@ -185,8 +193,20 @@ class Compiler:
                 return range(1)
             case DataTypes.ENV:
                 return ""
-            case DataTypes.DICT | DataTypes.LIST | DataTypes.SET | DataTypes.TUPLE:
+            case DataTypes.PATH:
+                return Path()
+            case DataTypes.SEMVER:
+                return semantic_version.Version('0.0.0')
+            case DataTypes.SEMVER:
+                return re.compile('')
+            case DataTypes.DICT:
                 return {}
+            case DataTypes.LIST:
+                return []
+            case DataTypes.SET:
+                return set()
+            case DataTypes.TUPLE:
+                return tuple()
         raise NotImplementedError(
             f"Still need to add default for type {cast_type.value}"
         )
@@ -196,7 +216,7 @@ class Compiler:
 
 
 if __name__ == "__main__":
-    file = Path('../test.thsl')
+    file = Path('../../test.thsl')
     compiler = Compiler(file)
     data = compiler.compile()
     pprint(data)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from src.grammar import DataTypes, Operators
+from thsl.src.grammar import DataTypes, Operators
 
 
 @dataclass

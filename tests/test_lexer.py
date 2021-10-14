@@ -1,7 +1,7 @@
 import pytest
 
-from src.grammar import TokenType
-from src.lexer import Lexer, Token
+from thsl.grammar import TokenType
+from thsl.lexer import Lexer, Token
 
 
 @pytest.fixture

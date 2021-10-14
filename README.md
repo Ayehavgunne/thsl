@@ -19,6 +19,33 @@ Indentation is done via tabs only
 
 See [sample.thsl](sample.thsl) for more.
 
+## Install
+This is currently a beta level project
+
+```commandline
+pip install thsl
+```
+
+## Usage
+```python
+>>> from pathlib import Path
+>>> import thsl
+
+>>> data = thsl.load(Path("data.thsl"))
+{
+  'debug': False,
+  'name': 'My Name',
+  'graphics': {
+    'target_framerate': 60,
+    'fullscreen': False,
+    'resolution': {
+      'width': 1920,
+      'height': 1080
+    }
+  }
+}
+```
+
 ## Features
 Not finalized. Subject to change
 
@@ -64,12 +91,16 @@ Not finalized. Subject to change
   - [x] Ranges
     - [x] exclusive
     - [x] inclusive
-  - [x] Dates
-  - [x] Times
-  - [x] DateTimes
-  - [x] Intervals
+  - [x] Dates (with the help of the dateutil library)
+  - [x] Times (with the help of the dateutil library)
+  - [x] DateTimes (with the help of the dateutil library)
+  - [x] Intervals (with the help of the tempora library)
   - [x] IP Addresses
   - [x] URLs
+  - [x] Environment Variables
+  - [x] Paths
+  - [x] Semantic Version Numbers (using the semantic_version library)
+  - [x] Regex
 - Inheritance
 - Interfaces
 - Type Aliases
@@ -85,8 +116,6 @@ Not finalized. Subject to change
   - conversion would be lossy unless only compatible types are used
 - YAML or JSON input
 - zlib (de)compression
-- regex
-- semantic version numbers
 - type addon system
 
 ## Benefits
@@ -132,6 +161,7 @@ maintain it in one place.
 - [ ] string templating
 
 ## Other TODO:
+- [ ] dump to file
 - [ ] Finalize grammar and token structure
 - [ ] Python code generation
 - [ ] Code generation for other languages

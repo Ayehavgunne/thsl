@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 with open('CHANGELOG.md', 'r') as fh:
     for line in fh.readlines():
         if 'Current Version: ' in line:
-            version = line.replace('Current Version: ', '')
+            version = line.replace('Current Version: ', '').strip()
             break
 
 with open("README.md", "r") as fh:
@@ -12,8 +12,11 @@ with open("README.md", "r") as fh:
 with open("requirements.txt", "r") as fh:
     requirements = fh.readlines()
 
-with open("dev_requirements.txt", "r") as fh:
-    dev_requirements = fh.readlines()
+try:
+    with open("dev_requirements.txt", "r") as fh:
+        dev_requirements = fh.readlines()
+except FileNotFoundError:
+    dev_requirements = []
 
 setup(
     name="thsl",

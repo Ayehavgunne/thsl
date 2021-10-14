@@ -3,7 +3,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Iterator, Literal
 
-from src.grammar import (
+from thsl.src.grammar import (
     TokenType,
     DataTypes,
     Operators,
@@ -108,6 +108,10 @@ class Lexer:
     def _current_state(self) -> LexarState:
         return self._type_stack[-1]
 
+    @property
+    def _len(self) -> int:
+        return len(self._text)
+
     def _make_token(
         self,
         token_type: TokenType,
@@ -129,7 +133,7 @@ class Lexer:
     def _next_char(self) -> None:
         self._pos += 1
         self._column += 1
-        if self._pos > len(self.text) - 1:
+        if self._pos > self._len - 1:
             self._current_char = None
             self._char_type = None
         else:
@@ -139,7 +143,7 @@ class Lexer:
     def _skip_char(self) -> None:
         self._pos += 1
         self._column += 1
-        if self._pos > len(self.text) - 1:
+        if self._pos > self._len - 1:
             self._current_char = None
             self._char_type = None
         else:
@@ -154,10 +158,14 @@ class Lexer:
     def _peek(self, num: int, ignore_whitespace: bool = False) -> Optional[str]:
         peek_pos = self._pos + num
         if ignore_whitespace:
-            while peek_pos > len(self.text) - 1 and self.text[peek_pos].isspace():
+            while (
+                peek_pos < self._len - 1
+                and self.text[peek_pos].isspace()
+                and self.text[peek_pos] != TokenType.NEWLINE.value
+            ):
                 peek_pos += 1
             return self.text[peek_pos]
-        if peek_pos > len(self.text) - 1:
+        if peek_pos > self._len - 1:
             return None
         else:
             return self.text[peek_pos]
@@ -449,8 +457,8 @@ class Lexer:
 
     def _get_next_token(self) -> Token:
         if (
-                self._current_char == Operators.LIST_DELIMITER.value
-                and self._peek(1) == Operators.LIST_DELIMITER.value
+            self._current_char == Operators.LIST_DELIMITER.value
+            and self._peek(1) == Operators.LIST_DELIMITER.value
         ):
             raise SyntaxError(
                 f"Exected value line={self._line_num} column={self._column + 1}"
@@ -460,7 +468,14 @@ class Lexer:
             return self._eof()
 
         if self._current_char == Operators.VALUE_DELIMITER.value:
-            self._skip_char()
+            peek = self._peek(1, True)
+            if self._current_data_type is None and (
+                peek == TokenType.NEWLINE.value or peek == TokenType.COMMENT.value
+            ):
+                self._next_char()
+                return self._make_token(TokenType.TYPE, DataTypes.DICT.value)
+            else:
+                self._skip_char()
 
         if self._current_char == TokenType.NEWLINE.value:
             return self._eat_newline()
@@ -490,7 +505,10 @@ class Lexer:
         if not self._word_type:
             self._word_type = self._char_type
 
-        if self._word_type == TokenType.OPERATOR:
+        if (
+            self._word_type == TokenType.OPERATOR
+            and self._current_data_type not in (DataTypes.PATH, DataTypes.REGEX)
+        ):
             return self._eat_operator()
 
         if self._current_data_type in (
@@ -505,6 +523,8 @@ class Lexer:
             DataTypes.BASE64,
             DataTypes.BASE64E,
             DataTypes.RANGE,
+            DataTypes.PATH,
+            DataTypes.REGEX,
         ):
             return self._eat_rest_of_line()
 
@@ -535,11 +555,12 @@ class Lexer:
         yield token
 
     def parse(self) -> list[Token]:
-        return list(self.analyze())
+        tokens = list(self.analyze())
+        return [token for token in tokens]
 
 
 if __name__ == "__main__":
-    file = Path("../test.thsl")
+    file = Path("../../test.thsl")
     lexer = Lexer(file.open().read())
     for t in lexer.parse():
         print(t)

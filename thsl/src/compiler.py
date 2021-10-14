@@ -1,22 +1,21 @@
 import base64
 import ipaddress
 import os
+import re
 import struct
 import urllib.parse
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from pprint import pprint
 from typing import Any, Optional
 
-import re
 import semantic_version
 import tempora
 from dateutil import parser as dateutil
 
+from thsl.src.abstract_syntax_tree import Collection, Key, Value, Void
 from thsl.src.grammar import DataTypes
 from thsl.src.parser import Parser
-from thsl.src.abstract_syntax_tree import Key, Value, Collection, Void
 
 
 class Compiler:
@@ -38,6 +37,7 @@ class Compiler:
                 self._current_key = item
             match item:
                 case Key(items=Value()) as key:
+                    # noinspection PyTupleItemAssignment
                     root[key.name] = self.cast_scalar(key.items.value, key.type)
                 case Key(items=Collection(
                     type=(
@@ -47,22 +47,22 @@ class Compiler:
                         | DataTypes.TUPLE
                     )
                 )) as key:
+                    # noinspection PyTupleItemAssignment
                     root[key.name] = self._visit(key.items)
                 case Value() as value:
-                    match root:
-                        case list():
-                            root.append(
-                                self.cast_scalar(value.value, self._current_key.type)
-                            )
-                        case set():
-                            root.add(
-                                self.cast_scalar(value.value, self._current_key.type)
-                            )
-                        case tuple():
-                            root = (
-                                *root,
-                                self.cast_scalar(value.value, self._current_key.type)
-                            )
+                    if isinstance(root, list):
+                        root.append(
+                            self.cast_scalar(value.value, self._current_key.type)
+                        )
+                    if isinstance(root, set):
+                        root.add(
+                            self.cast_scalar(value.value, self._current_key.type)
+                        )
+                    if isinstance(root, tuple):
+                        root = (
+                            *root,
+                            self.cast_scalar(value.value, self._current_key.type)
+                        )
         return root
 
     @staticmethod
@@ -216,6 +216,7 @@ class Compiler:
 
 
 if __name__ == "__main__":
+    from pprint import pprint
     file = Path('../../test.thsl')
     compiler = Compiler(file)
     data = compiler.compile()

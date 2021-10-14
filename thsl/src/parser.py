@@ -1,9 +1,8 @@
 from pathlib import Path
-from pprint import pprint
 from typing import Optional
 
-from thsl.src.abstract_syntax_tree import Collection, Key, Value, AST, Void
-from thsl.src.grammar import TokenType, DataTypes, Operators
+from thsl.src.abstract_syntax_tree import AST, Collection, Key, Value, Void
+from thsl.src.grammar import DataTypes, Operators, TokenType
 from thsl.src.lexer import Lexer, Token
 
 
@@ -175,6 +174,7 @@ class Parser:
 
 
 if __name__ == "__main__":
+    from pprint import pprint
     file = Path("../../test.thsl")
     parser = Parser(file)
     pprint(parser.parse())

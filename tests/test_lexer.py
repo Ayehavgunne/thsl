@@ -1,7 +1,7 @@
 import pytest
 
-from thsl.grammar import TokenType
-from thsl.lexer import Lexer, Token
+from thsl.src.grammar import TokenType
+from thsl.src.lexer import Lexer, Token
 
 
 @pytest.fixture
@@ -50,9 +50,13 @@ def test_key(lexer, config, expected_key):
     ("config",),
     (
         ("my_value .int: 1\n",),
+        ("my_value   .int: 1\n",),
+        ("my_value   .int:   1\n",),
+        ("my_value   .int  :   1\n",),
         ("my_value .int : 1\n",),
         ("my_value .int  1\n",),
         ("my_value .int    1\n",),
+        ("my_value   .int    1\n",),
         ("'my_value' .int: 1\n",),
         ('"my_value" .int: 1\n',),
         ("' my_value' .int: 1\n",),
@@ -198,27 +202,13 @@ def test_value(lexer, config, expected_key, index):
     assert actual[index] == expected
 
 
-@pytest.mark.parametrize(
-    ("config", "expected_key"),
-    (
-        (
-            """graphics:
+def test_nesting(lexer):
+    lexer.text = """graphics:
 \ttarget_framerate .int: 60
-""",
-            "false",
-        ),
-        (
-            """graphics
-\ttarget_framerate .int 60
-""",
-            "false",
-        ),
-    ),
-)
-def test_nesting(lexer, config, expected_key):
-    lexer.text = config
+"""
     expected = [
         Token(type=TokenType.KEY, value="graphics", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="dict", line=1, indent=0),
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.KEY, value="target_framerate", line=2, indent=1),
         Token(type=TokenType.TYPE, value="int", line=2, indent=1),

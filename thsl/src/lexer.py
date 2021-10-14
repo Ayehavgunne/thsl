@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Iterator, Literal
+from typing import Iterator, Literal, Optional
 
 from thsl.src.grammar import (
-    TokenType,
+    MULTI_CHAR_OPERATORS,
+    OPERATORS_TO_IGNORE,
+    OTHER_NUMERIC_CHARACTERS,
     DataTypes,
     Operators,
-    OPERATORS_TO_IGNORE,
-    MULTI_CHAR_OPERATORS,
-    OTHER_NUMERIC_CHARACTERS,
+    TokenType,
 )
 
 
@@ -505,9 +505,9 @@ class Lexer:
         if not self._word_type:
             self._word_type = self._char_type
 
-        if (
-            self._word_type == TokenType.OPERATOR
-            and self._current_data_type not in (DataTypes.PATH, DataTypes.REGEX)
+        if self._word_type == TokenType.OPERATOR and self._current_data_type not in (
+            DataTypes.PATH,
+            DataTypes.REGEX,
         ):
             return self._eat_operator()
 

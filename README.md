@@ -17,7 +17,7 @@ graphics:
 
 Indentation is done via tabs only
 
-See [sample.thsl](sample.thsl) for more.
+See [sample.thsl](https://github.com/Ayehavgunne/thsl/blob/main/sample.thsl) for more.
 
 ## Install
 This is currently a beta level project

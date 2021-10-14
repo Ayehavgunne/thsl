@@ -1,8 +1,8 @@
 from pathlib import Path
+from typing import TextIO
 
 from thsl.exceptions import ThslLoadError
 from thsl.src.compiler import Compiler
-from typing import TextIO
 
 
 def loads(text: str) -> dict:

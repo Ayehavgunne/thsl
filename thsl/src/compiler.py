@@ -7,7 +7,6 @@ import urllib.parse
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from pprint import pprint
 from typing import Any, Optional
 
 import semantic_version
@@ -217,6 +216,7 @@ class Compiler:
 
 
 if __name__ == "__main__":
+    from pprint import pprint
     file = Path('../../test.thsl')
     compiler = Compiler(file)
     data = compiler.compile()

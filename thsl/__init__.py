@@ -15,5 +15,6 @@ def loads(text: str) -> dict:
 
 def load(file_path: TextIO | Path) -> dict:
     if isinstance(file_path, Path):
-        return loads(file_path.open().read())
+        with file_path.open() as open_file:
+            return loads(open_file.read())
     return loads(file_path.read())

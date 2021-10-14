@@ -555,8 +555,7 @@ class Lexer:
         yield token
 
     def parse(self) -> list[Token]:
-        tokens = list(self.analyze())
-        return [token for token in tokens]
+        return list(self.analyze())
 
 
 if __name__ == "__main__":

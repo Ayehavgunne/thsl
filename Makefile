@@ -29,19 +29,22 @@ endif
 
 EXPECTED_PYTHON_VERSION := 3
 PYTHON_VERSION := $(shell python3 --version | cut -d" " -f2 | cut -d"." -f1)
-BIN_PATH := .env/bin
+SITE_PACKAGES := $(shell pip show pip | grep '^Location' | cut -f2 -d':')
+ROOT := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+BIN_PATH := ${ROOT}.env/bin
 PYTHON_PATH := ${BIN_PATH}/python
 ACTIVATE_PATH := ${BIN_PATH}/activate
 PIP_PATH := ${BIN_PATH}/pip
-ROOT := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
-SRC := ${ROOT}/thsl
-TEST := ${ROOT}/tests
+SRC := ${ROOT}thsl
+TEST := ${ROOT}tests
 .PHONY: check-python black isort mypy lint test check setup format env
 
 all: setup
 
-setup: env
+$(SITE_PACKAGES): requirements.txt
 	${PIP_PATH} install -r requirements.txt
+
+setup: $(SITE_PACKAGES)
 
 black: setup
 	. ${ACTIVATE_PATH} && ${BIN_PATH}/black ${SRC}
@@ -66,7 +69,7 @@ check: mypy lint
 
 env: check-python
 	python3 -m venv .env
-	. ${ACTIVATE_PATH} && ${PIP_PATH} install -U pip
+	. ${ACTIVATE_PATH} && ${PIP_PATH} install -U pip setuptools wheel
 
 check-python:
 ifneq ($(PYTHON_VERSION), $(EXPECTED_PYTHON_VERSION))

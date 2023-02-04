@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from thsl.src.abstract_syntax_tree import AST, Collection, Key, Value, Void
-from thsl.src.grammar import DataType, Operator, TokenType
+from thsl.src.grammar import DataType, ITERATOR_ITEMS, Operator, TokenType
 from thsl.src.lexer import Lexer, Token
 
 
@@ -88,7 +88,10 @@ class Parser:
         while self.indent == _indent:
             if statement := self.statement():
                 results.append(statement)
-            if self.type == TokenType.NEWLINE:
+            if self.type == TokenType.NEWLINE or (
+                self.type == TokenType.OPERATOR
+                and self.current_token.value in [item.value for item in ITERATOR_ITEMS]
+            ):
                 self.next_token()
             if self.type == TokenType.EOF:
                 break
@@ -106,9 +109,11 @@ class Parser:
     def eat_key(self) -> Key | None:
         name = self.value
         self.next_token()
+        subtype = None
         key_type = self.eat_type()
         self.next_token()
         value: Value | Collection
+        upcoming_token = self.preview(1)
         if key_type == DataType.DICT and self.type == TokenType.NEWLINE:
             self.next_token()
         if self.type == TokenType.OPERATOR:
@@ -117,6 +122,14 @@ class Parser:
             self.set_indent()
             value = self.make_collection(key_type)
             self.set_indent()
+        elif (
+            self.type == TokenType.NEWLINE and upcoming_token.type == TokenType.OPERATOR
+        ):
+            self.next_token()
+            self.next_token()
+            subtype = key_type
+            key_type = DataType.LIST
+            value = self.make_collection(key_type)
         else:
             value = self.eat_value()
         return Key(
@@ -125,6 +138,7 @@ class Parser:
             items=value,
             line=self.line,
             column=self.column,
+            subtype=subtype,
         )
 
     def eat_type(self) -> DataType:

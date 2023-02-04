@@ -72,13 +72,16 @@ class Operator(EnumDict):
     LANGLEBRACKET = "<"
     RANGLEBRACKET = ">"
     LIST_DELIMITER = ","
+    LIST_ITEM = "-"
+    TUPLE_ITEM = ")"
+    SET_ITEM = ">"
     TYPE_INITIATOR = ":"
+    DECIMAL_POINT = "."
     RANGE = ".."
     ELLIPSIS = "..."
     SINGLE_QUOTE = "'"
     DOUBLE_QUOTE = '"'
     EXTENDS = "->"
-    DECIMAL_POINT = "."
 
 
 OPENING_BRACKETS = (Operator.LPAREN, Operator.LSQUAREBRACKET, Operator.LCURLYBRACKET)
@@ -92,6 +95,8 @@ MULTI_CHAR_OPERATORS = (
     Operator.ELLIPSIS,
     Operator.EXTENDS,
 )
+
+ITERATOR_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
 
 OPERATORS_TO_IGNORE = ("_",)
 

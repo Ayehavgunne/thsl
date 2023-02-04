@@ -62,7 +62,7 @@ TypeContentState = Homogeneous | Heterogeneous
 
 
 @dataclass
-class LexarState:
+class LexerState:
     type: TypeState = TypeState.DICT
     contents: TypeContentState = field(default_factory=lambda: Heterogeneous())
 
@@ -75,12 +75,13 @@ class Lexer:
         self._char_type: TokenType | None
         self._current_token: Token | None
         self._current_data_type: DataType | None
+        self._last_data_type: DataType | None
         self._current_key: Token | None
         self._word: str
         self._word_type: TokenType | None
         self._line_num: int
         self._indent_level: int
-        self._type_stack = [LexarState()]
+        self._type_stack = [LexerState()]
         self.user_types: list[str]
         self.text = text
 
@@ -110,12 +111,13 @@ class Lexer:
         self._column = 1
         self._char_type = None
         self._current_token = None
+        self._last_data_type = None
         self._current_data_type = None
         self._current_key = None
         self.user_types = []
 
     @property
-    def _current_state(self) -> LexarState:
+    def _current_state(self) -> LexerState:
         return self._type_stack[-1]
 
     @property
@@ -227,6 +229,7 @@ class Lexer:
         self._column = 0
         self._indent_level = 0
         self._increment_line_num()
+        self._last_data_type = self._current_data_type
         self._current_data_type = None
         self._current_key = None
         self._next_char()
@@ -332,13 +335,16 @@ class Lexer:
             type_content_state = Heterogeneous()
 
         if token.value == Operator.LSQUAREBRACKET.value:
-            self._type_stack.append(LexarState(TypeState.LIST, type_content_state))
+            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+        if token.value == Operator.LIST_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
+            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
         if token.value == Operator.LANGLEBRACKET.value:
-            self._type_stack.append(LexarState(TypeState.SET, type_content_state))
+            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
         if token.value == Operator.LCURLYBRACKET.value:
-            self._type_stack.append(LexarState(TypeState.DICT, type_content_state))
+            self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
         if token.value == Operator.LPAREN.value:
-            self._type_stack.append(LexarState(TypeState.TUPLE, type_content_state))
+            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
 
         if token.value == Operator.RSQUAREBRACKET.value:
             if self._current_state.type != TypeState.LIST:

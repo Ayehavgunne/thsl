@@ -47,6 +47,7 @@ class Key(AST):
     name: str
     type: DataType
     items: Value | Collection
+    subtype: DataType | None = None
 
 
 @dataclass

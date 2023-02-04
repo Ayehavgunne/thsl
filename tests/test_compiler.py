@@ -13,70 +13,6 @@ from dateutil.tz import tzoffset
 DATA_DIR = Path(__file__).parent / "data"
 
 
-def test_parser():
-    actual = thsl.load(DATA_DIR / "basic.thsl")
-    # noinspection PyArgumentList
-    expected = {
-        "1": "one",
-        "a_char": "a",
-        "a_complex": (3 - 2j),
-        "a_decimal": Decimal("4.2"),
-        "a_set": {1, 2, 3},
-        "alarm": datetime.time(8, 0),
-        "base_64": b"The Spanish Inquisition!",
-        "base_64_encode": b"RW5jb2RlIHRoaXMgc3RyaW5nIHRvIGJhc2U2NA==",
-        "birthday": datetime.date(1986, 2, 10),
-        "debug": True,
-        "escaping": 'My "Name ',
-        "graphics": {
-            "fullscreen": False,
-            "resolution": {"height": 1080, "width": 1920},
-            "target_framerate": 60,
-        },
-        "hexadecimal": "0xdeadbeef",
-        "inclusive_example": range(1, 6),
-        "infinity": float("inf"),
-        "int": 1,
-        "ip_address": IPv4Address("192.168.1.1"),
-        "ip_address_v6": IPv6Address("fe80:cd00:0:cde:1257:0:211e:729c"),
-        "ip_network": IPv4Network("192.168.0.0/28"),
-        "keys can be in quotes": 1,
-        "multi_line_str": "This\nstring is\n    on multiple\n         lines.\n",
-        "my_interval": datetime.timedelta(seconds=3600),
-        "my_num": -50,
-        "my_page": ParseResult(
-            scheme="http",
-            netloc="www.example.com",
-            path="/index.html",
-            params="",
-            query="",
-            fragment="",
-        ),
-        "name": "Frank Drebin",
-        "name_quotes": " My name",
-        "name_single_quotes": "My name is {name}",
-        "neg_infinity": float("-inf"),
-        "new_year": datetime.datetime(2020, 1, 1, 12, 0, tzinfo=tzoffset(None, -21600)),
-        "not_a_number": Decimal("NaN"),
-        "num": -3,
-        "number_sep": 100000000,
-        "octal": "0o7",
-        "range_example": range(1, 5),
-        "sci_note": 0.00013,
-        "set_one_liner": {1, 2, 3},
-        "simple_tuple": (1, 2, 3),
-        "some_bytes": b"\x00u",
-        "str": "str",
-        "uniform_list": [1, 2, 4, 7],
-        "uniform_list_one_liner": [1, 2, 3],
-    }
-    for key in actual:
-        if key == "not_a_number":
-            assert Decimal.is_nan(actual[key])
-        else:
-            assert actual[key] == expected[key]
-
-
 def test_bool():
     actual = thsl.load(DATA_DIR / "bool.thsl")
     expected = {"debug": True}
@@ -292,6 +228,96 @@ def test_base64_encoded():
 def test_date():
     actual = thsl.load(DATA_DIR / "date.thsl")
     expected = {"birthday": datetime.date(1986, 2, 10)}
+    assert actual == expected
+
+
+def test_datetime():
+    actual = thsl.load(DATA_DIR / "datetime.thsl")
+    expected = {
+        "new_year": datetime.datetime(2020, 1, 1, 12, 0, tzinfo=tzoffset(None, -21600))
+    }
+    assert actual == expected
+
+
+def test_interval():
+    actual = thsl.load(DATA_DIR / "interval.thsl")
+    expected = {"my_interval": datetime.timedelta(seconds=3600)}
+    assert actual == expected
+
+
+def test_time():
+    actual = thsl.load(DATA_DIR / "time.thsl")
+    expected = {"alarm": datetime.time(8, 0)}
+    assert actual == expected
+
+
+def test_ip_address():
+    actual = thsl.load(DATA_DIR / "ip_address.thsl")
+    expected = {"ip_address": IPv4Address("192.168.1.1")}
+    assert actual == expected
+
+
+def test_ip_address_v6():
+    actual = thsl.load(DATA_DIR / "ip_address_v6.thsl")
+    expected = {"ip_address_v6": IPv6Address("fe80:cd00:0:cde:1257:0:211e:729c")}
+    assert actual == expected
+
+
+def test_ip_network():
+    actual = thsl.load(DATA_DIR / "ip_network.thsl")
+    expected = {"ip_network": IPv4Network("192.168.0.0/28")}
+    assert actual == expected
+
+
+def test_url():
+    actual = thsl.load(DATA_DIR / "url.thsl")
+    # noinspection PyArgumentList
+    expected = {
+        "my_page": ParseResult(
+            scheme="http",
+            netloc="www.example.com",
+            path="/index.html",
+            params="",
+            query="",
+            fragment="",
+        )
+    }
+    assert actual == expected
+
+
+def test_range():
+    actual = thsl.load(DATA_DIR / "range.thsl")
+    expected = {"my_range": range(1, 5)}
+    assert actual == expected
+
+
+def test_range_inclusive():
+    actual = thsl.load(DATA_DIR / "range_inclusive.thsl")
+    expected = {"my_range": range(1, 6)}
+    assert actual == expected
+
+
+def test_num_seperators():
+    actual = thsl.load(DATA_DIR / "num_seperators.thsl")
+    expected = {"number_sep": 100000000}
+    assert actual == expected
+
+
+def test_dict():
+    actual = thsl.load(DATA_DIR / "dict.thsl")
+    expected = {
+        "graphics": {
+            "fullscreen": False,
+            "resolution": {"height": 1080, "width": 1920},
+            "target_framerate": 60,
+        }
+    }
+    assert actual == expected
+
+
+def test_list():
+    actual = thsl.load(DATA_DIR / "list.thsl")
+    expected = {"homogeneous_list": [1, 2, 4, 7]}
     assert actual == expected
 
 

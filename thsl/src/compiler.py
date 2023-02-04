@@ -109,11 +109,9 @@ class Compiler:
                 case DataType.FLOAT:
                     result = float(value)
                 case DataType.HEX:
-                    intermediary = int(value, 16)
-                    result = hex(intermediary)
+                    result = int(value, 16)
                 case DataType.OCT:
-                    intermediary = int(value, 8)
-                    result = oct(intermediary)
+                    result = int(value, 8)
                 case DataType.COMPLEX:
                     result = complex(value.replace("i", "j"))
                 case DataType.BASE64:

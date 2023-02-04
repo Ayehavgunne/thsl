@@ -213,11 +213,3 @@ class Compiler:
 
     def compile(self) -> dict:
         return self._visit()
-
-
-if __name__ == "__main__":
-    from pprint import pprint
-    file = Path('../../test.thsl')
-    compiler = Compiler(file)
-    data = compiler.compile()
-    pprint(data)

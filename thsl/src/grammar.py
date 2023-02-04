@@ -72,12 +72,13 @@ class Operators(EnumDict):
     LANGLEBRACKET = "<"
     RANGLEBRACKET = ">"
     LIST_DELIMITER = ","
-    DOT = "."
+    TYPE_INITIATOR = ":"
     RANGE = ".."
     ELLIPSIS = "..."
     SINGLE_QUOTE = "'"
     DOUBLE_QUOTE = '"'
     EXTENDS = "->"
+    DECIMAL_POINT = "."
 
 
 OPENING_BRACKETS = (Operators.LPAREN, Operators.LSQUAREBRACKET, Operators.LCURLYBRACKET)
@@ -86,7 +87,7 @@ CLOSING_BRACKETS = (Operators.RPAREN, Operators.RSQUAREBRACKET, Operators.RCURLY
 QUOTES = (Operators.SINGLE_QUOTE, Operators.DOUBLE_QUOTE)
 
 MULTI_CHAR_OPERATORS = (
-    Operators.DOT,
+    Operators.DECIMAL_POINT,
     Operators.RANGE,
     Operators.ELLIPSIS,
     Operators.EXTENDS,
@@ -94,7 +95,7 @@ MULTI_CHAR_OPERATORS = (
 
 OPERATORS_TO_IGNORE = ("_",)
 
-OTHER_NUMERIC_CHARACTERS = (Operators.DOT.value, "i", "e", "_", "-")
+OTHER_NUMERIC_CHARACTERS = (Operators.DECIMAL_POINT.value, "i", "e", "_", "-")
 
 
 class TokenType(EnumDict):

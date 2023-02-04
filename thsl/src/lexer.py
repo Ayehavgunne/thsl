@@ -1,14 +1,15 @@
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import auto, Enum
 from pathlib import Path
 from typing import Iterator, Literal, Optional
 
 from thsl.src.grammar import (
+    DataTypes,
     MULTI_CHAR_OPERATORS,
+    Operators,
+    Operators,
     OPERATORS_TO_IGNORE,
     OTHER_NUMERIC_CHARACTERS,
-    DataTypes,
-    Operators,
     TokenType,
 )
 
@@ -347,7 +348,7 @@ class Lexer:
     def _eat_type(self, value: str = None) -> Token:
         if value:
             return self._make_token(TokenType.TYPE, value)
-        if self._current_char == Operators.DOT.value:
+        if self._current_char == Operators.TYPE_INITIATOR.value:
             self._next_char()
         while (
             self._char_type == TokenType.ALPHANUMERIC
@@ -490,7 +491,7 @@ class Lexer:
 
         if (
             self._current_data_type is None
-            and self._current_char == Operators.DOT.value
+            and self._current_char == Operators.TYPE_INITIATOR.value
         ):
             return self._eat_type()
 
@@ -556,10 +557,3 @@ class Lexer:
 
     def parse(self) -> list[Token]:
         return list(self.analyze())
-
-
-if __name__ == "__main__":
-    file = Path("../../test.thsl")
-    lexer = Lexer(file.open().read())
-    for t in lexer.parse():
-        print(t)

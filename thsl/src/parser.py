@@ -171,10 +171,3 @@ class Parser:
         if self.value == closing_operator:
             self.next_token()
         return value
-
-
-if __name__ == "__main__":
-    from pprint import pprint
-    file = Path("../../test.thsl")
-    parser = Parser(file)
-    pprint(parser.parse())

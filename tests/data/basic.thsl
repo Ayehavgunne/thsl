@@ -1,0 +1,47 @@
+a_char :char: a
+multi_line_str :str: "This
+string is
+    on multiple
+         lines.
+"
+"keys can be in quotes" :int: 1
+int :int: 1
+str :str: str
+my_num :int: "-50"
+1 :str: one
+a_set :int: <
+	1
+	2
+	3
+>
+set_one_liner :int: <1, 2, 3>
+uniform_list_one_liner :int: [1, 2, 3,]
+simple_tuple :int: (1, 2, 3)
+some_bytes :bytes: 1110101
+a_complex :complex: 3-2i
+a_decimal :dec: 4.2
+infinity :float: inf
+neg_infinity :float: -inf
+not_a_number :dec: nan
+sci_note :float: 1.3e-4
+hexadecimal :hex: deadbeef
+octal :oct: 7
+base_64 :base64: VGhlIFNwYW5pc2ggSW5xdWlzaXRpb24h
+base_64_encode :base64e: Encode this string to base64
+birthday :date: 1986-02-10
+new_year :datetime: 2020-01-01 12:00:00 -6
+my_interval :interval: 1 hour
+alarm :time: 08:00:00AM
+ip_address :ip: 192.168.1.1
+ip_address_v6 :ip: FE80:CD00:0000:0CDE:1257:0000:211E:729C
+ip_network :network: 192.168.0.0/28
+my_page :url: http://www.example.com/index.html
+range_example :range: 1..5  # non-inclusive
+inclusive_example :range: 1...5  # inclusive
+number_sep :int: 100_000_000
+graphics:
+	target_framerate :int: 60
+	fullscreen :bool: false
+	resolution :dict:
+		width :int: 1920
+		height :int: 1080

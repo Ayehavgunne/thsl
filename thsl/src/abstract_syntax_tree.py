@@ -28,6 +28,7 @@ class Collection(AST):
     items: list[AST] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        # convert to match statement
         if isinstance(self.type, str):
             if self.type == Operator.LSQUAREBRACKET.value:
                 self.type = DataType.LIST

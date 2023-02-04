@@ -7,7 +7,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import semantic_version
 import tempora
@@ -25,13 +25,13 @@ class Compiler:
         self._current_key: Key | None = None
 
     def compile(self) -> dict:
-        return self._visit()
+        return self._visit()  # type: ignore
 
     @property
     def user_types(self) -> list[str]:
         return self._parser.user_types
 
-    def _visit(self, current_node: Collection | None = None) -> Any:
+    def _visit(self, current_node: Collection | None = None) -> Iterable:
         if current_node is None:
             current_node = self.tree
         root = self.cast_compound(current_node.type)  # type: ignore
@@ -41,7 +41,7 @@ class Compiler:
             match item:
                 case Key(items=Value()) as key:
                     # noinspection PyTupleItemAssignment
-                    root[key.name] = self.cast_scalar(
+                    root[key.name] = self.cast_scalar(  # type: ignore
                         key.items.value,  # type: ignore
                         key.type,
                     )
@@ -77,7 +77,7 @@ class Compiler:
         return root
 
     @staticmethod
-    def cast_compound(collection_type: DataType) -> Any:
+    def cast_compound(collection_type: DataType) -> Iterable:
         match collection_type:
             case DataType.DICT:
                 return {}
@@ -87,6 +87,8 @@ class Compiler:
                 return set()
             case DataType.TUPLE:
                 return tuple()
+            case _:
+                return {}
 
     def cast_scalar(self, value: str | Void, cast_type: DataType) -> Any:
         result: Any = None

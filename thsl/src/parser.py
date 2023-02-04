@@ -17,7 +17,6 @@ class Parser:
         self.last_key = None
         self.pos = 0
         self._indent = 0
-        # self.stack = []
 
     def parse(self) -> Collection:
         root = Collection(type=DataType.DICT, line=self.line, column=self.column)

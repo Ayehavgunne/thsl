@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 from ipaddress import IPv4Address, IPv4Network, IPv6Address
+from pathlib import Path
 from urllib.parse import ParseResult
 
 import thsl
@@ -8,78 +9,11 @@ import thsl
 from dateutil.tz import tzoffset
 
 
+DATA_DIR = Path(__file__).parent / "data"
+
+
 def test_parser():
-    sample = """debug :bool: true
-num :int: -3
-name :str: Frank Drebin
-name_quotes :str: " My name"
-name_single_quotes :str: 'My name is {name}'
-escaping :str: "My \\"Name "
-escaping_single_quotes :str: 'My name is \{{name}\}'
-a_char :char: a
-multi_line_str :str: "This
-string is
-    on multiple
-         lines.
-"
-"keys can be in quotes" :int: 1
-int :int: 1
-str :str: str
-my_num :int: "-50"
-1 :str: one
-uniform_list :int: [
-	1
-	2
-	4
-	7
-]
-a_set :int: <
-	1
-	2
-	3
->
-set_one_liner :int: <1, 2, 3>
-#complex_list :dict: [
-#	things:
-#		one :int: 1
-#		two :int: 2
-#	other_things:
-#		three :int: 3
-#		four :int: 4
-#]
-uniform_list_one_liner :int: [1, 2, 3,]
-simple_tuple :int: (1, 2, 3)
-#dict_one_liner: {one :int: 1, two :float: 2}
-some_bytes :bytes: 1110101
-a_complex :complex: 3-2i
-a_decimal :dec: 4.2
-infinity :float: inf
-neg_infinity :float: -inf
-not_a_number :dec: nan
-sci_note :float: 1.3e-4
-hexadecimal :hex: deadbeef
-octal :oct: 7
-base_64 :base64: VGhlIFNwYW5pc2ggSW5xdWlzaXRpb24h
-base_64_encode :base64e: Encode this string to base64
-birthday :date: 1986-02-10
-new_year :datetime: 2020-01-01 12:00:00 -6
-my_interval :interval: 1 hour
-alarm :time: 08:00:00AM
-ip_address :ip: 192.168.1.1
-ip_address_v6 :ip: FE80:CD00:0000:0CDE:1257:0000:211E:729C
-ip_network :network: 192.168.0.0/28
-my_page :url: http://www.example.com/index.html
-range_example :range: 1..5  # non-inclusive
-inclusive_example :range: 1...5  # inclusive
-number_sep :int: 100_000_000
-graphics:
-	target_framerate :int: 60
-	fullscreen :bool: false
-	resolution :dict:
-		width :int: 1920
-		height :int: 1080
-"""
-    result = thsl.loads(sample)
+    actual = thsl.load(DATA_DIR / "basic.thsl")
     # noinspection PyArgumentList
     expected = {
         "1": "one",
@@ -93,7 +27,6 @@ graphics:
         "birthday": datetime.date(1986, 2, 10),
         "debug": True,
         "escaping": 'My "Name ',
-        "escaping_single_quotes": "My name is \\{{name}\\}",
         "graphics": {
             "fullscreen": False,
             "resolution": {"height": 1080, "width": 1920},
@@ -136,8 +69,73 @@ graphics:
         "uniform_list": [1, 2, 4, 7],
         "uniform_list_one_liner": [1, 2, 3],
     }
-    for key in result:
+    for key in actual:
         if key == "not_a_number":
-            assert Decimal.is_nan(result[key])
+            assert Decimal.is_nan(actual[key])
         else:
-            assert result[key] == expected[key]
+            assert actual[key] == expected[key]
+
+
+def test_bool():
+    actual = thsl.load(DATA_DIR / "bool.thsl")
+    expected = {"debug": True}
+    assert actual == expected
+
+
+def test_int():
+    actual = thsl.load(DATA_DIR / "int.thsl")
+    expected = {"num": -3}
+    assert actual == expected
+
+
+def test_str():
+    actual = thsl.load(DATA_DIR / "str.thsl")
+    expected = {"name": "Frank Drebin"}
+    assert actual == expected
+
+
+def test_str_quotes():
+    actual = thsl.load(DATA_DIR / "str_quotes.thsl")
+    expected = {"name_quotes": " My name"}
+    assert actual == expected
+
+
+def test_str_single_quotes():
+    actual = thsl.load(DATA_DIR / "str_single_quotes.thsl")
+    expected = {"name_single_quotes": "My name is Frank Drebin"}
+    assert actual == expected
+
+
+def test_str_escaping():
+    actual = thsl.load(DATA_DIR / "str_escaping.thsl")
+    expected = {"escaping": 'My "Name '}
+    assert actual == expected
+
+
+# def test_str_escaping_single_quotes():
+#     actual = thsl.load(DATA_DIR / "str_escaping_single_quotes.thsl")
+#     expected = {"escaping_single_quotes": "My name is {name}"}
+#     assert actual == expected
+
+
+# def test_str_templating():
+#     actual = thsl.load(DATA_DIR / "str_templating.thsl")
+#     expected = {"template": "My name is Frank Drebin"}
+#     assert actual["template"] == expected["template"]
+
+
+def test_char():
+    actual = thsl.load(DATA_DIR / "char.thsl")
+    expected = {"a_char": "a"}
+    assert actual == expected
+
+
+# def test_list_of_dicts():
+#     actual = thsl.load(DATA_DIR / "list_of_dicts.thsl")
+#     expected = {
+#         "list_of_dicts": [
+#             {"one": 1},
+#             {"two": 2},
+#         ]
+#     }
+#     assert actual == expected

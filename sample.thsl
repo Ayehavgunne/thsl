@@ -1,10 +1,10 @@
 # comments use a # (pound sign, hash)
 # all root values get serialized into single dictionary
-debug :bool: false
+debug :bool: true
 num :int: -3
 name :str: Frank Drebin  # strings don't need quotes and will be left/right trimmed of whitespace
 name_quotes :str: " My name"  # but they can use quotes if you don't want to trim the whitespace
-name_single_quotes :str: 'My name is {name}'  # single quotes allow templating
+name_single_quotes :str: 'My name is {name}'  # single quotes allow templating, not implimented yet
 escaping :str: "My \"Name "
 
 # currently the colon is not required but it helps with readability
@@ -24,10 +24,6 @@ graphics:
 		height :int: 1080
 	key :str  # defaults to empty string
 	key_without_value :float  # defaults to 0
-
-	# null is not an option by default, a nullable decorator is available to mark as such
-	@nullable
-	nullable_key :float  # will be null
 # indentation has to be a tab
 
 a_char :char: a  # can only be a single character
@@ -71,60 +67,53 @@ range_example :range: 1..5  # non-inclusive
 inclusive_example :range: 1...5  # inclusive
 number_sep :int: 100_000_000  # numbers support seperators
 
-uniform_list :int: [  # list entries are delimeted by a return character and use square brackets
-	1
-	2
-	4
-	7
-]
+homogeneous_list :int:  # list entries are delimeted by a return character and are prefixed by a dash
+	- 1
+	- 2
+	- 4
+	- 7
+# If the list is homogeneous then the type of all the elements can be provided next to the list name for convenience
 
-a_set :int: <
-	1
-	2
-	3
->
-set_one_liner :int: <1, 2, 3>
+heterogeneous_list:
+	- :int: 1
+	- :float: 3.14159
+	- :dec: 2.11
+	- :str: hello
 
-complex_list :dict: [
-	things:
-		one :int: 1
-		two :int: 2
-	other_things:
-		three :int: 3
-		four :int: 4
-]
+list_of_dicts:
+	- {one :int: 1, two :int: 2}
+	- {three :int: 3, four :int: 4}
 
-heterogeneous_list: [
-	:int: 1
-	:float: 3.14159
-	:dec: 2.11
-	:str: hello
-]
-
-uniform_list_one_liner :int: [1, 2, 3,]  # trailing commas are valid
+dict_one_liner: {one :int: 1, two :int: 2}
+uniform_list_one_liner :int: [1, 2, 3,]  # trailing commas are valid, and encouraged!
 heterogeneous_list_one_liner: [:int: 1, :float: 3.14159, :dec: 2.11, :str: hello]
+
+a_set :int:
+	> 1
+	> 2
+	> 3
+set_one_liner :int: <1, 2, 3>
 
 simple_tuple :int: (1, 2, 3)
 
-typed_tuple: (
-	:int: 1
-	:float: 2
-	:dec: 3
-	:str: 4
-)
 
-named_tuple: (
-	one :int
-	two :int
-	three :float: 3.0
-)
+# Experimental syntax
+
+typed_tuple:
+	) :int: 1
+	) :float: 2
+	) :dec: 3
+	) :str: 4
+
+named_tuple:
+	) one :int
+	) two :int
+	) three :float: 3.0  # default value?
 
 # spaces are not required between entries or key-values but they sure do help readability
 tuple_one_liner: (:int:1,:float:2)
 
-dict_one_liner: {one :int: 1, two :float: 2}
-
-# structs are very similar to dictionaries but can be handled differently by the consuming language
+# structs can be very similar to dictionaries but could be handled differently by the consuming language
 # Python could create a dataclass for example
 # either dynamically or human-readable code can be generated
 MyStruct :struct:
@@ -161,18 +150,18 @@ some_data :struct:
 	@required
 	my_name :str
 
-	@optional
+	@optional  # or @nullable?
 	my_age :int
 
-#Config :struct:
-#	debug :bool: false
-#	show_fps :bool: true
-#	Graphics :struct:
-#		target_framerate :int: 60
-#		fullscreen :bool: false
-#		hardware_acceleration :bool: false
-#		vsync :bool: false
-#		scaled :bool: true
-#		Resolution :struct:  # 16:9 aspect ratio only please
-#			width :int: 1920
-#			height :int: 1080
+Config :struct:
+	debug :bool: false
+	show_fps :bool: true
+	Graphics :struct:
+		target_framerate :int: 60
+		fullscreen :bool: false
+		hardware_acceleration :bool: false
+		vsync :bool: false
+		scaled :bool: true
+		Resolution :struct:  # 16:9 aspect ratio only please
+			width :int: 1920
+			height :int: 1080

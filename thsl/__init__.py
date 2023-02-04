@@ -9,7 +9,7 @@ def loads(text: str) -> dict:
     compiler = Compiler(text)
     try:
         return compiler.compile()
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001
         raise ThslLoadError from err
 
 

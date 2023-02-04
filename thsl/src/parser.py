@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
 from thsl.src.abstract_syntax_tree import AST, Collection, Key, Value, Void
-from thsl.src.grammar import DataTypes, Operators, TokenType
+from thsl.src.grammar import DataType, Operator, TokenType
 from thsl.src.lexer import Lexer, Token
 
 
@@ -18,7 +17,14 @@ class Parser:
         self.last_key = None
         self.pos = 0
         self._indent = 0
-        self.stack = []
+        # self.stack = []
+
+    def parse(self) -> Collection:
+        root = Collection(type=DataType.DICT, line=self.line, column=self.column)
+        while self.type != TokenType.EOF:
+            statements = self.statement_list()
+            root.items.extend(statements)
+        return root
 
     @property
     def user_types(self) -> list[str]:
@@ -50,12 +56,11 @@ class Parser:
     def len(self) -> int:
         return len(self.tokens)
 
-    def set_indent(self):
+    def set_indent(self) -> None:
         if self.indent != self._indent:
             self._indent = self.indent
 
     def next_token(self) -> Token:
-        # print(self.current_token)
         if self.type == TokenType.EOF:
             return self.current_token
         token = self.current_token
@@ -69,14 +74,7 @@ class Parser:
             preview_pos = self.len - 1
         return self.tokens[preview_pos]
 
-    def parse(self) -> Collection:
-        root = Collection(type=DataTypes.DICT, line=self.line, column=self.column)
-        while self.type != TokenType.EOF:
-            statements = self.statement_list()
-            root.items.extend(statements)
-        return root
-
-    def make_collection(self, collection_type: DataTypes) -> Collection:
+    def make_collection(self, collection_type: DataType) -> Collection:
         return Collection(
             items=self.statement_list(),
             type=collection_type,
@@ -89,7 +87,8 @@ class Parser:
         self.set_indent()
         _indent = self._indent
         while self.indent == _indent:
-            results.append(self.statement())
+            if statement := self.statement():
+                results.append(statement)
             if self.type == TokenType.NEWLINE:
                 self.next_token()
             if self.type == TokenType.EOF:
@@ -98,20 +97,20 @@ class Parser:
         results = [result for result in results if result is not None]
         return results
 
-    def statement(self) -> Optional[AST]:
-        statement = None
+    def statement(self) -> AST | None:
         if self.type == TokenType.KEY:
-            statement = self.eat_key()
+            return self.eat_key()
         if self.type == TokenType.VALUE:
-            statement = self.eat_value()
-        return statement
+            return self.eat_value()
+        return None
 
-    def eat_key(self) -> Optional[Key]:
+    def eat_key(self) -> Key | None:
         name = self.value
         self.next_token()
         key_type = self.eat_type()
         self.next_token()
-        if key_type == DataTypes.DICT and self.type == TokenType.NEWLINE:
+        value: Value | Collection
+        if key_type == DataType.DICT and self.type == TokenType.NEWLINE:
             self.next_token()
         if self.type == TokenType.OPERATOR:
             value = self.eat_operator()
@@ -129,30 +128,31 @@ class Parser:
             column=self.column,
         )
 
-    def eat_type(self) -> DataTypes:
+    def eat_type(self) -> DataType:
         if self.type == TokenType.NEWLINE:
-            return DataTypes.DICT
-        return DataTypes(self.value)
+            return DataType.DICT
+        return DataType(self.value)
 
     def eat_value(self) -> Value:
+        value: str | Void
         if self.value == TokenType.NEWLINE.value:
             value = Void(line=self.line, column=self.column)
         else:
             value = self.value
-        value = Value(value=value, line=self.line, column=self.column)
+        ret_value = Value(value=value, line=self.line, column=self.column)
         self.next_token()
-        return value
+        return ret_value
 
     def eat_operator(self) -> Collection:
         value = Collection(type=self.value, line=self.line, column=self.column)
-        if self.value == Operators.LSQUAREBRACKET.value:
-            closing_operator = Operators.RSQUAREBRACKET.value
-        elif self.value == Operators.LANGLEBRACKET.value:
-            closing_operator = Operators.RANGLEBRACKET.value
-        elif self.value == Operators.LCURLYBRACKET.value:
-            closing_operator = Operators.RCURLYBRACKET.value
-        elif self.value == Operators.LPAREN.value:
-            closing_operator = Operators.RPAREN.value
+        if self.value == Operator.LSQUAREBRACKET.value:
+            closing_operator = Operator.RSQUAREBRACKET.value
+        elif self.value == Operator.LANGLEBRACKET.value:
+            closing_operator = Operator.RANGLEBRACKET.value
+        elif self.value == Operator.LCURLYBRACKET.value:
+            closing_operator = Operator.RCURLYBRACKET.value
+        elif self.value == Operator.LPAREN.value:
+            closing_operator = Operator.RPAREN.value
         else:
             raise NotImplementedError
         self.next_token()
@@ -161,7 +161,7 @@ class Parser:
                 self.next_token()
             if (
                 self.type == TokenType.OPERATOR
-                and self.value == Operators.LIST_DELIMITER.value
+                and self.value == Operator.LIST_DELIMITER.value
             ):
                 self.next_token()
             if self.value == closing_operator:

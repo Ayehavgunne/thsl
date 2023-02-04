@@ -1,13 +1,12 @@
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import auto, Enum
-from pathlib import Path
-from typing import Iterator, Literal, Optional
+from typing import Literal
 
 from thsl.src.grammar import (
-    DataTypes,
+    DataType,
     MULTI_CHAR_OPERATORS,
-    Operators,
-    Operators,
+    Operator,
     OPERATORS_TO_IGNORE,
     OTHER_NUMERIC_CHARACTERS,
     TokenType,
@@ -27,9 +26,9 @@ class Token:
     line: int
     indent: int
     column: int = field(compare=False, default=0)
-    meta_data: Optional[TokenMetaData] = field(compare=False, default=None)
+    meta_data: TokenMetaData | None = field(compare=False, default=None)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Token("
             f"type={self.type.name}, "
@@ -48,12 +47,12 @@ class TypeState(Enum):
 
 @dataclass
 class Homogeneous:
-    type: DataTypes
+    type: DataType
 
 
 @dataclass
 class Heterogeneous:
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if self.__class__ == other:
             return True
         return super().__eq__(other)
@@ -65,25 +64,35 @@ TypeContentState = Homogeneous | Heterogeneous
 @dataclass
 class LexarState:
     type: TypeState = TypeState.DICT
-    contents: TypeContentState = Heterogeneous
+    contents: TypeContentState = field(default_factory=lambda: Heterogeneous())
 
 
 class Lexer:
     def __init__(self, text: str) -> None:
         self._pos: int
         self._column: int
-        self._current_char: Optional[str]
-        self._char_type: Optional[TokenType]
-        self._current_token: Optional[Token]
-        self._current_data_type: Optional[DataTypes]
-        self._current_key: Optional[Token]
+        self._current_char: str | None
+        self._char_type: TokenType | None
+        self._current_token: Token | None
+        self._current_data_type: DataType | None
+        self._current_key: Token | None
         self._word: str
-        self._word_type: Optional[TokenType]
+        self._word_type: TokenType | None
         self._line_num: int
         self._indent_level: int
         self._type_stack = [LexarState()]
         self.user_types: list[str]
         self.text = text
+
+    def parse(self) -> list[Token]:
+        return list(self.analyze())
+
+    def analyze(self) -> Iterator[Token]:
+        token = self._get_next_token()
+        while token.type != TokenType.EOF:
+            yield token
+            token = self._get_next_token()
+        yield token
 
     @property
     def text(self) -> str:
@@ -117,8 +126,8 @@ class Lexer:
         self,
         token_type: TokenType,
         value: str,
-        line_num: int = None,
-        meta_data: TokenMetaData = None,
+        line_num: int | None = None,
+        meta_data: TokenMetaData | None = None,
     ) -> Token:
         if not line_num:
             line_num = self._line_num
@@ -156,7 +165,7 @@ class Lexer:
         self._word_type = None
         return old_word
 
-    def _peek(self, num: int, ignore_whitespace: bool = False) -> Optional[str]:
+    def _peek(self, num: int, ignore_whitespace: bool = False) -> str | None:
         peek_pos = self._pos + num
         if ignore_whitespace:
             while (
@@ -168,10 +177,9 @@ class Lexer:
             return self.text[peek_pos]
         if peek_pos > self._len - 1:
             return None
-        else:
-            return self.text[peek_pos]
+        return self.text[peek_pos]
 
-    def preview_token(self, num: int = 1) -> Optional[Token]:
+    def preview_token(self, num: int = 1) -> Token | None:
         if num < 1:
             raise ValueError("num argument must be 1 or greater")
         next_token = None
@@ -240,10 +248,10 @@ class Lexer:
         )
 
     def _eat_rest_of_line(self) -> Token:
-        if self._current_char == Operators.SINGLE_QUOTE.value:
-            return self._eat_string(Operators.SINGLE_QUOTE)
-        if self._current_char == Operators.DOUBLE_QUOTE.value:
-            return self._eat_string(Operators.DOUBLE_QUOTE)
+        if self._current_char == Operator.SINGLE_QUOTE.value:
+            return self._eat_string(Operator.SINGLE_QUOTE)
+        if self._current_char == Operator.DOUBLE_QUOTE.value:
+            return self._eat_string(Operator.DOUBLE_QUOTE)
         while (
             self._current_char != TokenType.NEWLINE.value
             and self._current_char != TokenType.COMMENT.value
@@ -253,7 +261,8 @@ class Lexer:
                 and self._peek(1) == TokenType.NEWLINE.value
             ):
                 self._next_char()
-            self._word += self._current_char
+            if self._current_char is not None:
+                self._word += self._current_char
             self._next_char()
         self._word = self._word.strip()
         return self._eat_value(
@@ -262,7 +271,7 @@ class Lexer:
 
     def _eat_string(
         self,
-        quote: Literal[Operators.DOUBLE_QUOTE, Operators.SINGLE_QUOTE],
+        quote: Literal[Operator.DOUBLE_QUOTE, Operator.SINGLE_QUOTE],
     ) -> Token:
         self._next_char()
         while self._current_char != quote.value:
@@ -273,7 +282,8 @@ class Lexer:
                 self._next_char()
             if self._current_char == TokenType.NEWLINE.value:
                 self._line_num += 1
-            self._word += self._current_char
+            if self._current_char is not None:
+                self._word += self._current_char
             self._next_char()
         self._next_char()
         if not self._current_key:
@@ -287,13 +297,13 @@ class Lexer:
             meta_data=TokenMetaData(quote.value == "'", quote.value == '"'),
         )
 
-    def _eat_operator(self, value: str = None) -> Token:
+    def _eat_operator(self, value: str | None = None) -> Token:
         if value:
             token = self._make_token(TokenType.OPERATOR, value)
         else:
             if (
                 self._current_char in MULTI_CHAR_OPERATORS
-                and self.preview_token(1).value in MULTI_CHAR_OPERATORS
+                and self.preview_token(1).value in MULTI_CHAR_OPERATORS  # type: ignore
             ):
                 self._next_char()
                 self._word += " "
@@ -301,11 +311,12 @@ class Lexer:
                     self._char_type == TokenType.ALPHANUMERIC
                     or self._char_type == TokenType.NUMBER
                 ):
-                    self._word += self._current_char
+                    if self._current_char is not None:
+                        self._word += self._current_char
                     self._next_char()
                 token = self._make_token(TokenType.OPERATOR, self._reset_word())
             else:
-                if self._current_char in Operators.values():
+                if self._current_char in Operator.values():
                     self._word += self._current_char
                     self._next_char()
                 token = self._make_token(
@@ -313,61 +324,64 @@ class Lexer:
                     self._reset_word(),
                 )
 
+        type_content_state: TypeContentState
+
         if self._current_data_type:
             type_content_state = Homogeneous(self._current_data_type)
         else:
             type_content_state = Heterogeneous()
 
-        if token.value == Operators.LSQUAREBRACKET.value:
+        if token.value == Operator.LSQUAREBRACKET.value:
             self._type_stack.append(LexarState(TypeState.LIST, type_content_state))
-        if token.value == Operators.LANGLEBRACKET.value:
+        if token.value == Operator.LANGLEBRACKET.value:
             self._type_stack.append(LexarState(TypeState.SET, type_content_state))
-        if token.value == Operators.LCURLYBRACKET.value:
+        if token.value == Operator.LCURLYBRACKET.value:
             self._type_stack.append(LexarState(TypeState.DICT, type_content_state))
-        if token.value == Operators.LPAREN.value:
+        if token.value == Operator.LPAREN.value:
             self._type_stack.append(LexarState(TypeState.TUPLE, type_content_state))
 
-        if token.value == Operators.RSQUAREBRACKET.value:
+        if token.value == Operator.RSQUAREBRACKET.value:
             if self._current_state.type != TypeState.LIST:
                 raise SyntaxError
             self._type_stack.pop()
-        if token.value == Operators.RANGLEBRACKET.value:
+        if token.value == Operator.RANGLEBRACKET.value:
             if self._current_state.type != TypeState.SET:
                 raise SyntaxError
             self._type_stack.pop()
-        if token.value == Operators.RCURLYBRACKET.value:
+        if token.value == Operator.RCURLYBRACKET.value:
             if self._current_state.type != TypeState.DICT:
                 raise SyntaxError
             self._type_stack.pop()
-        if token.value == Operators.RPAREN.value:
+        if token.value == Operator.RPAREN.value:
             if self._current_state.type != TypeState.TUPLE:
                 raise SyntaxError
             self._type_stack.pop()
         return token
 
-    def _eat_type(self, value: str = None) -> Token:
+    def _eat_type(self, value: str | None = None) -> Token:
         if value:
             return self._make_token(TokenType.TYPE, value)
-        if self._current_char == Operators.TYPE_INITIATOR.value:
+        if self._current_char == Operator.TYPE_INITIATOR.value:
             self._next_char()
         while (
             self._char_type == TokenType.ALPHANUMERIC
             or self._char_type == TokenType.NUMBER
         ):
-            if self._current_char == Operators.VALUE_DELIMITER.value:
+            if self._current_char == Operator.VALUE_DELIMITER.value:
                 break
-            self._word += self._current_char
+            if self._current_char is not None:
+                self._word += self._current_char
             self._next_char()
 
-        self._current_data_type = DataTypes(self._word)
+        self._current_data_type = DataType(self._word)
 
         if self._word in self.user_types:
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
             )
-        if self._word in DataTypes.values():
-            if self._current_key and self._current_data_type == DataTypes.STRUCT:
+        if self._word in DataType.values():
+            if self._current_key and self._current_data_type == DataType.STRUCT:
                 self.user_types.append(self._current_key.value)
             return self._make_token(
                 TokenType.TYPE,
@@ -380,19 +394,19 @@ class Lexer:
             self._char_type == TokenType.ALPHANUMERIC
             or self._char_type == TokenType.NUMBER
         ):
-            self._word += self._current_char
+            if self._current_char is not None:
+                self._word += self._current_char
             self._next_char()
 
-        if self._current_data_type in (DataTypes.FLOAT, DataTypes.DEC):
+        if self._current_data_type in (DataType.FLOAT, DataType.DEC):
             return self._eat_number()
-        elif self._word in Operators.values():
+        if self._word in Operator.values():
             return self._eat_operator()
-        elif self._current_data_type:
+        if self._current_data_type:
             return self._eat_value(self._reset_word())
-        else:
-            return self._eat_key()
+        return self._eat_key()
 
-    def _eat_key(self, value: str = None) -> Token:
+    def _eat_key(self, value: str | None = None) -> Token:
         if value:
             token = self._make_token(TokenType.KEY, value)
         else:
@@ -400,16 +414,16 @@ class Lexer:
                 self._char_type == TokenType.ALPHANUMERIC
                 or self._char_type == TokenType.NUMBER
             ):
-                self._word += self._current_char
+                if self._current_char is not None:
+                    self._word += self._current_char
                 self._next_char()
             token = self._make_token(TokenType.KEY, self._reset_word())
         self._current_key = token
         return token
 
-    def _eat_constant(self, value: str = None) -> Token:
-        return self._make_token(TokenType.CONSTANT, value)
+    # def _eat_constant(self, value: str = None) -> Token:
 
-    def _eat_value(self, value: str = None, meta_data: TokenMetaData = None) -> Token:
+    def _eat_value(self, value: str, meta_data: TokenMetaData | None = None) -> Token:
         return self._make_token(TokenType.VALUE, value, meta_data=meta_data)
 
     def _eat_number(self) -> Token:
@@ -419,7 +433,8 @@ class Lexer:
         ):
             if self._current_char in OPERATORS_TO_IGNORE:
                 self._skip_char()
-            self._word += self._current_char
+            if self._current_char is not None:
+                self._word += self._current_char
             self._next_char()
         return self._eat_value(
             self._reset_word(),
@@ -439,16 +454,16 @@ class Lexer:
         )
 
     @staticmethod
-    def _get_type(char) -> TokenType:
+    def _get_type(char: str) -> TokenType:
         if char.isspace():
             return TokenType.WHITESPACE
         if char == TokenType.COMMENT.value:
             return TokenType.COMMENT
         if char == TokenType.ESCAPE.value:
             return TokenType.ESCAPE
-        if char == Operators.MINUS.value:
+        if char == Operator.MINUS.value:
             return TokenType.ALPHANUMERIC
-        if char in Operators.values():
+        if char in Operator.values():
             return TokenType.OPERATOR
         if char.isdigit():
             return TokenType.NUMBER
@@ -458,29 +473,28 @@ class Lexer:
 
     def _get_next_token(self) -> Token:
         if (
-            self._current_char == Operators.LIST_DELIMITER.value
-            and self._peek(1) == Operators.LIST_DELIMITER.value
+            self._current_char == Operator.LIST_DELIMITER.value
+            and self._peek(1) == Operator.LIST_DELIMITER.value
         ):
             raise SyntaxError(
-                f"Exected value line={self._line_num} column={self._column + 1}"
+                f"Exected value line={self._line_num} column={self._column + 1}",
             )
 
         if self._current_char is None:
             return self._eof()
 
-        if self._current_char == Operators.VALUE_DELIMITER.value:
-            peek = self._peek(1, True)
+        if self._current_char == Operator.VALUE_DELIMITER.value:
+            peek = self._peek(1, ignore_whitespace=True)
             if self._current_data_type is None and (
                 peek == TokenType.NEWLINE.value or peek == TokenType.COMMENT.value
             ):
                 self._next_char()
-                return self._make_token(TokenType.TYPE, DataTypes.DICT.value)
-            else:
-                self._skip_char()
+                return self._make_token(TokenType.TYPE, DataType.DICT.value)
+            self._skip_char()
 
         if self._current_char == TokenType.NEWLINE.value:
             return self._eat_newline()
-        elif self._current_char == TokenType.INDENT.value:
+        if self._current_char == TokenType.INDENT.value:
             self._skip_indent()
 
         if self._current_char.isspace():
@@ -491,15 +505,15 @@ class Lexer:
 
         if (
             self._current_data_type is None
-            and self._current_char == Operators.TYPE_INITIATOR.value
+            and self._current_char == Operator.TYPE_INITIATOR.value
         ):
             return self._eat_type()
 
-        if self._current_char == Operators.DOUBLE_QUOTE.value:
-            return self._eat_string(Operators.DOUBLE_QUOTE)
+        if self._current_char == Operator.DOUBLE_QUOTE.value:
+            return self._eat_string(Operator.DOUBLE_QUOTE)
 
-        if self._current_char == Operators.SINGLE_QUOTE.value:
-            return self._eat_string(Operators.SINGLE_QUOTE)
+        if self._current_char == Operator.SINGLE_QUOTE.value:
+            return self._eat_string(Operator.SINGLE_QUOTE)
 
         if not self._char_type:
             self._char_type = self._get_type(self._current_char)
@@ -507,35 +521,37 @@ class Lexer:
             self._word_type = self._char_type
 
         if self._word_type == TokenType.OPERATOR and self._current_data_type not in (
-            DataTypes.PATH,
-            DataTypes.REGEX,
+            DataType.PATH,
+            DataType.REGEX,
         ):
             return self._eat_operator()
 
         if self._current_data_type in (
-            DataTypes.STR,
-            DataTypes.DATE,
-            DataTypes.DATETIME,
-            DataTypes.TIME,
-            DataTypes.INTERVAL,
-            DataTypes.URL,
-            DataTypes.IP_ADDRESS,
-            DataTypes.IP_NETWORK,
-            DataTypes.BASE64,
-            DataTypes.BASE64E,
-            DataTypes.RANGE,
-            DataTypes.PATH,
-            DataTypes.REGEX,
+            DataType.STR,
+            DataType.DATE,
+            DataType.DATETIME,
+            DataType.TIME,
+            DataType.INTERVAL,
+            DataType.URL,
+            DataType.IP_ADDRESS,
+            DataType.IP_NETWORK,
+            DataType.BASE64,
+            DataType.BASE64E,
+            DataType.RANGE,
+            DataType.PATH,
+            DataType.REGEX,
         ):
             return self._eat_rest_of_line()
 
         if self._word_type == TokenType.ALPHANUMERIC:
             return self._eat_alpha()
 
-        if self._current_state.type == TypeState.LIST:
-            if self._current_state.contents != Heterogeneous:
-                if self._word_type == TokenType.NUMBER:
-                    return self._eat_number()
+        if (
+            self._current_state.type == TypeState.LIST
+            and self._current_state.contents != Heterogeneous
+            and self._word_type == TokenType.NUMBER
+        ):
+            return self._eat_number()
 
         if self._current_key is None:
             return self._eat_key()
@@ -547,13 +563,3 @@ class Lexer:
             return self._eat_escape()
 
         raise SyntaxError("Unknown character")
-
-    def analyze(self) -> Iterator[Token]:
-        token = self._get_next_token()
-        while token.type != TokenType.EOF:
-            yield token
-            token = self._get_next_token()
-        yield token
-
-    def parse(self) -> list[Token]:
-        return list(self.analyze())

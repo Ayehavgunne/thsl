@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from thsl.src.grammar import DataTypes, Operators
+from thsl.src.grammar import DataType, Operator
 
 
 @dataclass
@@ -11,7 +11,7 @@ class AST:
 
 @dataclass
 class Void(AST):
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if self.__class__ == other:
             return True
         return super().__eq__(other)
@@ -20,23 +20,25 @@ class Void(AST):
 @dataclass
 class Value(AST):
     value: str | Void
+    type: DataType | None = None
 
 
 @dataclass
 class Collection(AST):
-    type: DataTypes | str
+    type: DataType | str
     items: list[AST] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        # convert to match statement
         if isinstance(self.type, str):
-            if self.type == Operators.LSQUAREBRACKET.value:
-                self.type = DataTypes.LIST
-            elif self.type == Operators.LCURLYBRACKET.value:
-                self.type = DataTypes.DICT
-            elif self.type == Operators.LANGLEBRACKET.value:
-                self.type = DataTypes.SET
-            elif self.type == Operators.LPAREN.value:
-                self.type = DataTypes.TUPLE
+            if self.type in (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value):
+                self.type = DataType.LIST
+            elif self.type == Operator.LCURLYBRACKET.value:
+                self.type = DataType.DICT
+            elif self.type == Operator.LANGLEBRACKET.value:
+                self.type = DataType.SET
+            elif self.type == Operator.LPAREN.value:
+                self.type = DataType.TUPLE
             else:
                 raise NotImplementedError
 
@@ -44,8 +46,9 @@ class Collection(AST):
 @dataclass
 class Key(AST):
     name: str
-    type: DataTypes
+    type: DataType
     items: Value | Collection
+    subtype: DataType | None = None
 
 
 @dataclass

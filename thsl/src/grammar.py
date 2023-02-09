@@ -11,7 +11,7 @@ class EnumDict(Enum):
         return [enum.name for enum in cls]
 
 
-class DataTypes(EnumDict):
+class DataType(EnumDict):
     ANY = "any"
     INT = "int"
     DEC = "dec"
@@ -47,19 +47,20 @@ class DataTypes(EnumDict):
 
     INTERFACE = "interface"
     ALIAS = "alias"
+    UNKNOWN = "unknown"
 
 
 COMPOUND_TYPES = (
-    DataTypes.LIST,
-    DataTypes.SET,
-    DataTypes.DICT,
-    DataTypes.TUPLE,
-    DataTypes.ENUM,
-    DataTypes.STRUCT,
+    DataType.LIST,
+    DataType.SET,
+    DataType.DICT,
+    DataType.TUPLE,
+    DataType.ENUM,
+    DataType.STRUCT,
 )
 
 
-class Operators(EnumDict):
+class Operator(EnumDict):
     DECORATOR = "@"
     VALUE_DELIMITER = ":"
     MINUS = "-"
@@ -72,7 +73,11 @@ class Operators(EnumDict):
     LANGLEBRACKET = "<"
     RANGLEBRACKET = ">"
     LIST_DELIMITER = ","
-    DOT = "."
+    LIST_ITEM = "-"
+    SET_ITEM = ">"
+    TUPLE_ITEM = ")"
+    TYPE_INITIATOR = ":"
+    DECIMAL_POINT = "."
     RANGE = ".."
     ELLIPSIS = "..."
     SINGLE_QUOTE = "'"
@@ -80,21 +85,23 @@ class Operators(EnumDict):
     EXTENDS = "->"
 
 
-OPENING_BRACKETS = (Operators.LPAREN, Operators.LSQUAREBRACKET, Operators.LCURLYBRACKET)
-CLOSING_BRACKETS = (Operators.RPAREN, Operators.RSQUAREBRACKET, Operators.RCURLYBRACKET)
+OPENING_BRACKETS = (Operator.LPAREN, Operator.LSQUAREBRACKET, Operator.LCURLYBRACKET)
+CLOSING_BRACKETS = (Operator.RPAREN, Operator.RSQUAREBRACKET, Operator.RCURLYBRACKET)
 
-QUOTES = (Operators.SINGLE_QUOTE, Operators.DOUBLE_QUOTE)
+QUOTES = (Operator.SINGLE_QUOTE, Operator.DOUBLE_QUOTE)
 
 MULTI_CHAR_OPERATORS = (
-    Operators.DOT,
-    Operators.RANGE,
-    Operators.ELLIPSIS,
-    Operators.EXTENDS,
+    Operator.DECIMAL_POINT,
+    Operator.RANGE,
+    Operator.ELLIPSIS,
+    Operator.EXTENDS,
 )
+
+ITERATOR_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
 
 OPERATORS_TO_IGNORE = ("_",)
 
-OTHER_NUMERIC_CHARACTERS = (Operators.DOT.value, "i", "e", "_", "-")
+OTHER_NUMERIC_CHARACTERS = (Operator.DECIMAL_POINT.value, "i", "e", "_", "-")
 
 
 class TokenType(EnumDict):

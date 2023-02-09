@@ -47,6 +47,7 @@ class DataType(EnumDict):
 
     INTERFACE = "interface"
     ALIAS = "alias"
+    UNKNOWN = "unknown"
 
 
 COMPOUND_TYPES = (
@@ -73,8 +74,8 @@ class Operator(EnumDict):
     RANGLEBRACKET = ">"
     LIST_DELIMITER = ","
     LIST_ITEM = "-"
-    TUPLE_ITEM = ")"
     SET_ITEM = ">"
+    TUPLE_ITEM = ")"
     TYPE_INITIATOR = ":"
     DECIMAL_POINT = "."
     RANGE = ".."

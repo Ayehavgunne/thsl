@@ -207,14 +207,16 @@ def test_nesting(lexer):
 \ttarget_framerate :int: 60
 """
     expected = [
-        Token(type=TokenType.KEY, value="graphics", line=1, indent=0),
-        Token(type=TokenType.TYPE, value="dict", line=1, indent=0),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
-        Token(type=TokenType.KEY, value="target_framerate", line=2, indent=1),
-        Token(type=TokenType.TYPE, value="int", line=2, indent=1),
-        Token(type=TokenType.VALUE, value="60", line=2, indent=1),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
-        Token(type=TokenType.EOF, value="EOF", line=3, indent=0),
+        Token(type=TokenType.KEY, value="graphics", line=1, indent=0, column=9),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0, column=10),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=10),
+        Token(
+            type=TokenType.KEY, value="target_framerate", line=2, indent=1, column=18
+        ),
+        Token(type=TokenType.TYPE, value="int", line=2, indent=1, column=23),
+        Token(type=TokenType.VALUE, value="60", line=2, indent=1, column=27),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=27),
+        Token(type=TokenType.EOF, value="EOF", line=3, indent=0, column=1),
     ]
     actual = lexer.parse()
     assert actual == expected
@@ -266,6 +268,26 @@ def test_one_line_list(lexer):
         Token(type=TokenType.OPERATOR, value="]", line=1, indent=0),
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_one_line_dict(lexer):
+    lexer.text = "my_dict: {one :int: 1, two :float: 2}\n"
+    expected = [
+        Token(type=TokenType.KEY, value="my_dict", line=1, indent=0, column=8),
+        Token(type=TokenType.OPERATOR, value="{", line=1, indent=0, column=11),
+        Token(type=TokenType.KEY, value="one", line=1, indent=0, column=14),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0, column=19),
+        Token(type=TokenType.VALUE, value="1", line=1, indent=0, column=22),
+        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0, column=23),
+        Token(type=TokenType.KEY, value="two", line=1, indent=0, column=27),
+        Token(type=TokenType.TYPE, value="float", line=1, indent=0, column=34),
+        Token(type=TokenType.VALUE, value="2", line=1, indent=0, column=37),
+        Token(type=TokenType.OPERATOR, value="}", line=1, indent=0, column=38),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=38),
+        Token(type=TokenType.EOF, value="EOF", line=2, indent=0, column=1),
     ]
     actual = lexer.parse()
     assert actual == expected

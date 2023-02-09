@@ -20,6 +20,7 @@ class Void(AST):
 @dataclass
 class Value(AST):
     value: str | Void
+    type: DataType | None = None
 
 
 @dataclass
@@ -30,7 +31,7 @@ class Collection(AST):
     def __post_init__(self) -> None:
         # convert to match statement
         if isinstance(self.type, str):
-            if self.type == Operator.LSQUAREBRACKET.value:
+            if self.type in (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value):
                 self.type = DataType.LIST
             elif self.type == Operator.LCURLYBRACKET.value:
                 self.type = DataType.DICT

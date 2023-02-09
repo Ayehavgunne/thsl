@@ -327,6 +327,9 @@ class Lexer:
                     self._reset_word(),
                 )
 
+        if token.value == Operator.LIST_DELIMITER.value:
+            self._current_data_type = None
+
         type_content_state: TypeContentState
 
         if self._current_data_type:
@@ -334,16 +337,28 @@ class Lexer:
         else:
             type_content_state = Heterogeneous()
 
+        if token.value == Operator.LCURLYBRACKET.value:
+            self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
+
         if token.value == Operator.LSQUAREBRACKET.value:
             self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+
         if token.value == Operator.LIST_ITEM.value:
             type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+
         if token.value == Operator.LANGLEBRACKET.value:
             self._type_stack.append(LexerState(TypeState.SET, type_content_state))
-        if token.value == Operator.LCURLYBRACKET.value:
-            self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
+
+        if token.value == Operator.SET_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
+            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
+
         if token.value == Operator.LPAREN.value:
+            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
+
+        if token.value == Operator.TUPLE_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
 
         if token.value == Operator.RSQUAREBRACKET.value:
@@ -353,7 +368,8 @@ class Lexer:
         if token.value == Operator.RANGLEBRACKET.value:
             if self._current_state.type != TypeState.SET:
                 raise SyntaxError
-            self._type_stack.pop()
+            if not isinstance(type_content_state, Homogeneous):
+                self._type_stack.pop()
         if token.value == Operator.RCURLYBRACKET.value:
             if self._current_state.type != TypeState.DICT:
                 raise SyntaxError
@@ -361,7 +377,8 @@ class Lexer:
         if token.value == Operator.RPAREN.value:
             if self._current_state.type != TypeState.TUPLE:
                 raise SyntaxError
-            self._type_stack.pop()
+            if not isinstance(type_content_state, Homogeneous):
+                self._type_stack.pop()
         return token
 
     def _eat_type(self, value: str | None = None) -> Token:
@@ -495,7 +512,7 @@ class Lexer:
                 peek == TokenType.NEWLINE.value or peek == TokenType.COMMENT.value
             ):
                 self._next_char()
-                return self._make_token(TokenType.TYPE, DataType.DICT.value)
+                return self._make_token(TokenType.TYPE, DataType.UNKNOWN.value)
             self._skip_char()
 
         if self._current_char == TokenType.NEWLINE.value:
@@ -525,6 +542,9 @@ class Lexer:
             self._char_type = self._get_type(self._current_char)
         if not self._word_type:
             self._word_type = self._char_type
+
+        if isinstance(self._current_state.contents, Homogeneous):
+            self._current_data_type = self._current_state.contents.type
 
         if self._word_type == TokenType.OPERATOR and self._current_data_type not in (
             DataType.PATH,

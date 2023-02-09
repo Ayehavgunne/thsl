@@ -52,27 +52,34 @@ class Compiler:
                             | DataType.LIST
                             | DataType.SET
                             | DataType.TUPLE
+                            | DataType.UNKNOWN
                         ),
                     ),
                 ) as key:
                     # noinspection PyTupleItemAssignment
                     root[key.name] = self._visit(key.items)  # type: ignore
+                case Collection() as collection:
+                    if isinstance(root, list):
+                        root.append(self._visit(collection))
                 case Value() as value:
-                    # match self._current_key.type:
-                    #     case DataType.DICT:
                     if self._current_key is not None:
+                        subtype = self._current_key.subtype
+                        if subtype is None:
+                            subtype = self._current_key.type
+                        if subtype == DataType.UNKNOWN:
+                            subtype = value.type
                         if isinstance(root, list):
                             root.append(
-                                self.cast_scalar(value.value, self._current_key.type),
+                                self.cast_scalar(value.value, subtype),
                             )
                         if isinstance(root, set):
                             root.add(
-                                self.cast_scalar(value.value, self._current_key.type),
+                                self.cast_scalar(value.value, subtype),
                             )
                         if isinstance(root, tuple):
                             root = (
                                 *root,
-                                self.cast_scalar(value.value, self._current_key.type),
+                                self.cast_scalar(value.value, subtype),
                             )
         return root
 
@@ -155,6 +162,8 @@ class Compiler:
                     result = semantic_version.Version(value)
                 case DataType.REGEX:
                     result = re.compile(value)
+            if result is None:
+                print("NOPE")
             return result
         return self.get_default_value(cast_type)
 

@@ -97,30 +97,6 @@ def test_number_as_key():
     assert actual == expected
 
 
-def test_set():
-    actual = thsl.load(DATA_DIR / "set.thsl")
-    expected = {"a_set": {1, 2, 3}}
-    assert actual == expected
-
-
-def test_set_one_liner():
-    actual = thsl.load(DATA_DIR / "set_one_liner.thsl")
-    expected = {"set_one_liner": {1, 2, 3}}
-    assert actual == expected
-
-
-def test_homogeneous_list_one_liner():
-    actual = thsl.load(DATA_DIR / "homogeneous_list_one_liner.thsl")
-    expected = {"list_one_liner": [1, 2, 3]}
-    assert actual == expected
-
-
-def test_tuple_one_liner():
-    actual = thsl.load(DATA_DIR / "tuple_one_liner.thsl")
-    expected = {"my_tuple": (1, 2, 3)}
-    assert actual == expected
-
-
 def test_bytes():
     actual = thsl.load(DATA_DIR / "bytes.thsl")
     expected = {"some_bytes": b"\x00u"}
@@ -285,6 +261,22 @@ def test_url():
     assert actual == expected
 
 
+def test_url_part():
+    actual = thsl.load(DATA_DIR / "url_part.thsl")
+    # noinspection PyArgumentList
+    expected = {
+        "url_part": ParseResult(
+            scheme="",
+            netloc="",
+            path="/index/hello/things",
+            params="",
+            query="",
+            fragment="",
+        )
+    }
+    assert actual == expected
+
+
 def test_range():
     actual = thsl.load(DATA_DIR / "range.thsl")
     expected = {"my_range": range(1, 5)}
@@ -315,18 +307,71 @@ def test_dict():
     assert actual == expected
 
 
+def test_dict_one_liner():
+    actual = thsl.load(DATA_DIR / "dict_one_liner.thsl")
+    expected = {
+        "dict_one_liner": {
+            "one": 1,
+            "two": 2.0,
+        }
+    }
+    assert actual == expected
+
+
 def test_list():
     actual = thsl.load(DATA_DIR / "list.thsl")
     expected = {"homogeneous_list": [1, 2, 4, 7]}
     assert actual == expected
 
 
-# def test_list_of_dicts():
-#     actual = thsl.load(DATA_DIR / "list_of_dicts.thsl")
-#     expected = {
-#         "list_of_dicts": [
-#             {"one": 1},
-#             {"two": 2},
-#         ]
-#     }
-#     assert actual == expected
+def test_list_heterogeneous():
+    actual = thsl.load(DATA_DIR / "list_heterogeneous.thsl")
+    expected = {"my_list": [1, 3.14159, Decimal("2.11"), "hello"]}
+    assert actual == expected
+
+
+def test_list_one_liner():
+    actual = thsl.load(DATA_DIR / "list_one_liner.thsl")
+    expected = {"list_one_liner": [1, 2, 4, 7]}
+    assert actual == expected
+
+
+def test_list_heterogeneous_one_liner():
+    actual = thsl.load(DATA_DIR / "list_heterogeneous_one_liner.thsl")
+    expected = {"heterogeneous_list_one_liner": [1, 3.14159, Decimal("2.11"), "hello"]}
+    assert actual == expected
+
+
+def test_list_of_dicts():
+    actual = thsl.load(DATA_DIR / "list_of_dicts.thsl")
+    expected = {
+        "list_of_dicts": [
+            {"one": 1},
+            {"two": 2},
+        ]
+    }
+    assert actual == expected
+
+
+def test_set():
+    actual = thsl.load(DATA_DIR / "set.thsl")
+    expected = {"a_set": {1, 2, 3}}
+    assert actual == expected
+
+
+def test_set_one_liner():
+    actual = thsl.load(DATA_DIR / "set_one_liner.thsl")
+    expected = {"set_one_liner": {1, 2, 3}}
+    assert actual == expected
+
+
+def test_tuple():
+    actual = thsl.load(DATA_DIR / "tuple.thsl")
+    expected = {"my_tuple": (1, 2, 3)}
+    assert actual == expected
+
+
+def test_tuple_one_liner():
+    actual = thsl.load(DATA_DIR / "tuple_one_liner.thsl")
+    expected = {"my_tuple": (1, 2, 3)}
+    assert actual == expected

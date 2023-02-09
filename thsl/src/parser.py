@@ -34,7 +34,7 @@ class Parser:
         return self.current_token.line
 
     @property
-    def indent(self) -> int:
+    def current_token_indent(self) -> int:
         if self.current_token.type == TokenType.NEWLINE:
             return self._indent
         return self.current_token.indent
@@ -56,8 +56,8 @@ class Parser:
         return len(self.tokens)
 
     def set_indent(self) -> None:
-        if self.indent != self._indent:
-            self._indent = self.indent
+        if self.current_token_indent != self._indent:
+            self._indent = self.current_token_indent
 
     def next_token(self) -> Token:
         if self.type == TokenType.EOF:
@@ -85,7 +85,7 @@ class Parser:
         results = []
         self.set_indent()
         _indent = self._indent
-        while self.indent == _indent:
+        while self.current_token_indent == _indent:
             if statement := self.statement():
                 results.append(statement)
             if self.type == TokenType.NEWLINE or (
@@ -104,6 +104,15 @@ class Parser:
             return self.eat_key()
         if self.type == TokenType.VALUE:
             return self.eat_value()
+        if self.type == TokenType.TYPE:
+            value_type = self.eat_type()
+            self.next_token()
+            value = self.eat_value()
+            value.type = value_type
+            return value
+        if self.type == TokenType.OPERATOR:
+            return self.eat_operator()
+        self.next_token()
         return None
 
     def eat_key(self) -> Key | None:
@@ -114,11 +123,17 @@ class Parser:
         self.next_token()
         value: Value | Collection
         upcoming_token = self.preview(1)
-        if key_type == DataType.DICT and self.type == TokenType.NEWLINE:
+        if (
+            key_type == DataType.DICT or key_type == DataType.UNKNOWN
+        ) and self.type == TokenType.NEWLINE:
             self.next_token()
-        if self.type == TokenType.OPERATOR:
+        if (
+            key_type == DataType.DICT or key_type == DataType.UNKNOWN
+        ) and self.type == TokenType.KEY:
+            value = self.make_collection(key_type)
+        elif self.type == TokenType.OPERATOR:
             value = self.eat_operator()
-        elif self.indent > self._indent:
+        elif self.current_token_indent > self._indent:
             self.set_indent()
             value = self.make_collection(key_type)
             self.set_indent()
@@ -126,10 +141,17 @@ class Parser:
             self.type == TokenType.NEWLINE and upcoming_token.type == TokenType.OPERATOR
         ):
             self.next_token()
-            self.next_token()
-            subtype = key_type
-            key_type = DataType.LIST
-            value = self.make_collection(key_type)
+            if self.current_token.value in (
+                Operator.LIST_ITEM.value,
+                Operator.SET_ITEM.value,
+                Operator.TUPLE_ITEM.value,
+            ):
+                value = self.eat_operator()
+            else:
+                self.next_token()
+                subtype = key_type
+                key_type = DataType.LIST
+                value = self.make_collection(key_type)
         else:
             value = self.eat_value()
         return Key(
@@ -142,7 +164,7 @@ class Parser:
         )
 
     def eat_type(self) -> DataType:
-        if self.type == TokenType.NEWLINE:
+        if self.type == TokenType.NEWLINE or self.value == Operator.LCURLYBRACKET.value:
             return DataType.DICT
         return DataType(self.value)
 
@@ -166,6 +188,9 @@ class Parser:
             closing_operator = Operator.RCURLYBRACKET.value
         elif self.value == Operator.LPAREN.value:
             closing_operator = Operator.RPAREN.value
+        elif self.value in [item.value for item in ITERATOR_ITEMS]:
+            value.items.extend(self.eat_iterator_items())
+            return value
         else:
             raise NotImplementedError
         self.next_token()
@@ -180,7 +205,28 @@ class Parser:
             if self.value == closing_operator:
                 self.next_token()
                 break
-            value.items.append(self.eat_value())
+            if self.current_token.type == TokenType.KEY:
+                value.items.append(self.eat_key())
+            else:
+                value.items.append(self.eat_value())
         if self.value == closing_operator:
             self.next_token()
         return value
+
+    def eat_iterator_items(self) -> list[AST]:
+        current_indent = self.current_token_indent
+        items = []
+        self.set_indent()
+        while self.current_token_indent == current_indent:
+            self.next_token()
+            if self.current_token.value in (
+                Operator.LIST_ITEM.value,
+                Operator.SET_ITEM.value,
+                Operator.TUPLE_ITEM.value,
+            ):
+                self.next_token()
+            if self.current_token.type == TokenType.VALUE:
+                items.append(self.eat_value())
+            else:
+                items.append(self.statement())
+        return [item for item in items if item is not None]

@@ -15,11 +15,12 @@ escaping_single_quotes :str: 'My name is \{{name}\}'
 
 # types are preceded by a : (colon) to allow for seamlessly adding new/custom types
 
-# dicts are assumed when no type is provided and indentation increases one level
+# collection types do not need to have a type declared unless they contain homogeneous data
+# in which case you can provide the data type that they will contain
 graphics:
 	target_framerate :int: 60
 	fullscreen :bool: false
-	resolution :dict:  # the dict type can still be provided though
+	resolution:
 		width :int: 1920
 		height :int: 1080
 	key :str  # defaults to empty string
@@ -94,7 +95,11 @@ a_set :int:
 	> 3
 set_one_liner :int: <1, 2, 3>
 
-simple_tuple :int: (1, 2, 3)
+a_tuple :int:
+	) 1
+	) 2
+	) 3
+tuple_one_liner :int: (1, 2, 3)
 
 
 # Experimental syntax

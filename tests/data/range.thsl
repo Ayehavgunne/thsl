@@ -1,1 +1,1 @@
-my_range :range: 1..5  # non-inclusive
+my_range :range 1..5  # non-inclusive

@@ -4,11 +4,14 @@ from enum import auto, Enum
 from typing import Literal
 
 from thsl.src.grammar import (
+    ALL_DATA_TYPE_VALUES,
+    CompoundDataType,
     DataType,
     MULTI_CHAR_OPERATORS,
     Operator,
     OPERATORS_TO_IGNORE,
     OTHER_NUMERIC_CHARACTERS,
+    ScalarDataType,
     TokenType,
 )
 
@@ -47,7 +50,7 @@ class TypeState(Enum):
 
 @dataclass
 class Homogeneous:
-    type: DataType
+    type: ScalarDataType
 
 
 @dataclass
@@ -396,16 +399,20 @@ class Lexer:
                 self._word += self._current_char
             self._next_char()
 
-        self._current_data_type = DataType(self._word)
+        if self._word in ScalarDataType.values():
+            self._current_data_type = ScalarDataType(self._word)
+        else:
+            self._current_data_type = CompoundDataType(self._word)
 
         if self._word in self.user_types:
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
             )
-        if self._word in DataType.values():
-            if self._current_key and self._current_data_type == DataType.STRUCT:
-                self.user_types.append(self._current_key.value)
+        if self._word in ALL_DATA_TYPE_VALUES:
+            # if self._current_key and self._current_data_type ==
+            # CompoundDataType.STRUCT:
+            #     self.user_types.append(self._current_key.value)
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
@@ -421,7 +428,7 @@ class Lexer:
                 self._word += self._current_char
             self._next_char()
 
-        if self._current_data_type in (DataType.FLOAT, DataType.DEC):
+        if self._current_data_type in (ScalarDataType.FLOAT, ScalarDataType.DEC):
             return self._eat_number()
         if self._word in Operator.values():
             return self._eat_operator()
@@ -512,7 +519,7 @@ class Lexer:
                 peek == TokenType.NEWLINE.value or peek == TokenType.COMMENT.value
             ):
                 self._next_char()
-                return self._make_token(TokenType.TYPE, DataType.UNKNOWN.value)
+                return self._make_token(TokenType.TYPE, CompoundDataType.UNKNOWN.value)
             self._skip_char()
 
         if self._current_char == TokenType.NEWLINE.value:
@@ -547,25 +554,25 @@ class Lexer:
             self._current_data_type = self._current_state.contents.type
 
         if self._word_type == TokenType.OPERATOR and self._current_data_type not in (
-            DataType.PATH,
-            DataType.REGEX,
+            ScalarDataType.PATH,
+            ScalarDataType.REGEX,
         ):
             return self._eat_operator()
 
         if self._current_data_type in (
-            DataType.STR,
-            DataType.DATE,
-            DataType.DATETIME,
-            DataType.TIME,
-            DataType.INTERVAL,
-            DataType.URL,
-            DataType.IP_ADDRESS,
-            DataType.IP_NETWORK,
-            DataType.BASE64,
-            DataType.BASE64E,
-            DataType.RANGE,
-            DataType.PATH,
-            DataType.REGEX,
+            ScalarDataType.STR,
+            ScalarDataType.DATE,
+            ScalarDataType.DATETIME,
+            ScalarDataType.TIME,
+            ScalarDataType.INTERVAL,
+            ScalarDataType.URL,
+            ScalarDataType.IP_ADDRESS,
+            ScalarDataType.IP_NETWORK,
+            ScalarDataType.BASE64,
+            ScalarDataType.BASE64E,
+            ScalarDataType.RANGE,
+            ScalarDataType.PATH,
+            ScalarDataType.REGEX,
         ):
             return self._eat_rest_of_line()
 
@@ -573,8 +580,8 @@ class Lexer:
             return self._eat_alpha()
 
         if (
-            self._current_state.type == TypeState.LIST
-            and self._current_state.contents != Heterogeneous
+            self._current_state.type in (TypeState.LIST, TypeState.SET, TypeState.TUPLE)
+            and not isinstance(self._current_state.contents, Heterogeneous)
             and self._word_type == TokenType.NUMBER
         ):
             return self._eat_number()

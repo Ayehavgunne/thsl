@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from thsl.src.grammar import DataType, Operator
+from thsl.src.grammar import CompoundDataType, DataType, Operator
 
 
 @dataclass
@@ -32,13 +32,13 @@ class Collection(AST):
         # convert to match statement
         if isinstance(self.type, str):
             if self.type in (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value):
-                self.type = DataType.LIST
+                self.type = CompoundDataType.LIST
             elif self.type == Operator.LCURLYBRACKET.value:
-                self.type = DataType.DICT
-            elif self.type == Operator.LANGLEBRACKET.value:
-                self.type = DataType.SET
-            elif self.type == Operator.LPAREN.value:
-                self.type = DataType.TUPLE
+                self.type = CompoundDataType.DICT
+            elif self.type in (Operator.LANGLEBRACKET.value, Operator.SET_ITEM.value):
+                self.type = CompoundDataType.SET
+            elif self.type in (Operator.LPAREN.value, Operator.TUPLE_ITEM.value):
+                self.type = CompoundDataType.TUPLE
             else:
                 raise NotImplementedError
 

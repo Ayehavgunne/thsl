@@ -104,6 +104,14 @@ tuple_one_liner :int: (1, 2, 3)
 
 # Experimental syntax
 
+my_list:  # list of multi-line dicts
+	-
+		one :int: 1
+		two :int: 2
+	-
+		three :int: 3
+		four :int: 4
+
 typed_tuple:
 	) :int: 1
 	) :float: 2

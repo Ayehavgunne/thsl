@@ -14,7 +14,7 @@ import tempora
 from dateutil import parser as dateutil
 
 from thsl.src.abstract_syntax_tree import Collection, Key, Value, Void
-from thsl.src.grammar import DataType
+from thsl.src.grammar import CompoundDataType, DataType, ScalarDataType
 from thsl.src.parser import Parser
 
 
@@ -46,15 +46,7 @@ class Compiler:
                         key.type,
                     )
                 case Key(
-                    items=Collection(
-                        type=(
-                            DataType.DICT
-                            | DataType.LIST
-                            | DataType.SET
-                            | DataType.TUPLE
-                            | DataType.UNKNOWN
-                        ),
-                    ),
+                    items=Collection(type=CompoundDataType()),
                 ) as key:
                     # noinspection PyTupleItemAssignment
                     root[key.name] = self._visit(key.items)  # type: ignore
@@ -66,7 +58,7 @@ class Compiler:
                         subtype = self._current_key.subtype
                         if subtype is None:
                             subtype = self._current_key.type
-                        if subtype == DataType.UNKNOWN:
+                        if subtype == CompoundDataType.UNKNOWN:
                             subtype = value.type
                         if isinstance(root, list):
                             root.append(
@@ -84,148 +76,148 @@ class Compiler:
         return root
 
     @staticmethod
-    def cast_compound(collection_type: DataType) -> Iterable:
+    def cast_compound(collection_type: CompoundDataType) -> Iterable:
         match collection_type:
-            case DataType.DICT:
+            case CompoundDataType.DICT:
                 return {}
-            case DataType.LIST:
+            case CompoundDataType.LIST:
                 return []
-            case DataType.SET:
+            case CompoundDataType.SET:
                 return set()
-            case DataType.TUPLE:
+            case CompoundDataType.TUPLE:
                 return tuple()
             case _:
                 return {}
 
-    def cast_scalar(self, value: str | Void, cast_type: DataType) -> Any:
+    def cast_scalar(self, value: str | Void, cast_type: ScalarDataType) -> Any:
         result: Any = None
         if not isinstance(value, Void):
             match cast_type:
-                case DataType.ANY:
+                case ScalarDataType.ANY:
                     return value
-                case DataType.INT:
+                case ScalarDataType.INT:
                     result = int(value)
-                case DataType.STR:
+                case ScalarDataType.STR:
                     result = str(value)
-                case DataType.CHAR:
+                case ScalarDataType.CHAR:
                     if len(value) > 1:
                         raise ValueError("Char type can only be a single character")
                     result = str(value)
-                case DataType.DEC:
+                case ScalarDataType.DEC:
                     result = Decimal(value)
-                case DataType.FLOAT:
+                case ScalarDataType.FLOAT:
                     result = float(value)
-                case DataType.HEX:
+                case ScalarDataType.HEX:
                     result = int(value, 16)
-                case DataType.OCT:
+                case ScalarDataType.OCT:
                     result = int(value, 8)
-                case DataType.COMPLEX:
+                case ScalarDataType.COMPLEX:
                     result = complex(value.replace("i", "j"))
-                case DataType.BASE64:
+                case ScalarDataType.BASE64:
                     result = base64.b64decode(value)
-                case DataType.BASE64E:
+                case ScalarDataType.BASE64E:
                     result = base64.b64encode(value.encode("utf-8"))
-                case DataType.BOOL:
+                case ScalarDataType.BOOL:
                     if value == "true":
                         result = True
                     elif value == "false":
                         result = False
                     else:
                         raise SyntaxError
-                case DataType.BYTES:
+                case ScalarDataType.BYTES:
                     intermediary = int(value, 2)
                     result = struct.pack("!H", intermediary)
-                case DataType.DATETIME:
+                case ScalarDataType.DATETIME:
                     result = dateutil.parse(value)
-                case DataType.DATE:
+                case ScalarDataType.DATE:
                     result = dateutil.parse(value).date()
-                case DataType.TIME:
+                case ScalarDataType.TIME:
                     result = dateutil.parse(value).time()
-                case DataType.INTERVAL:
+                case ScalarDataType.INTERVAL:
                     result = tempora.parse_timedelta(value)
-                case DataType.IP_ADDRESS:
+                case ScalarDataType.IP_ADDRESS:
                     result = ipaddress.ip_address(value)
-                case DataType.IP_NETWORK:
+                case ScalarDataType.IP_NETWORK:
                     result = ipaddress.ip_network(value)
-                case DataType.URL:
+                case ScalarDataType.URL:
                     result = urllib.parse.urlparse(value)
-                case DataType.RANGE:
+                case ScalarDataType.RANGE:
                     if "..." in value:
                         result = range(int(value[0]), int(value[-1]) + 1)
                     else:
                         result = range(int(value[0]), int(value[-1]))
-                case DataType.ENV:
+                case ScalarDataType.ENV:
                     result = os.getenv(value)
-                case DataType.PATH:
+                case ScalarDataType.PATH:
                     result = Path(value)
-                case DataType.SEMVER:
+                case ScalarDataType.SEMVER:
                     result = semantic_version.Version(value)
-                case DataType.REGEX:
+                case ScalarDataType.REGEX:
                     result = re.compile(value)
             if result is None:
-                print("NOPE")
+                print("THIS SHOULDN'T HAPPEN")
             return result
         return self.get_default_value(cast_type)
 
     def get_default_value(self, cast_type: DataType) -> Any:
         match cast_type:
-            case DataType.ANY:
+            case ScalarDataType.ANY:
                 return None  # maybe raise exception
-            case DataType.INT:
+            case ScalarDataType.INT:
                 return 0
-            case DataType.STR:
+            case ScalarDataType.STR:
                 return ""
-            case DataType.CHAR:
+            case ScalarDataType.CHAR:
                 return ""
-            case DataType.DEC:
+            case ScalarDataType.DEC:
                 return Decimal("0")
-            case DataType.FLOAT:
+            case ScalarDataType.FLOAT:
                 return float(0)
-            case DataType.HEX:
+            case ScalarDataType.HEX:
                 return hex(0)
-            case DataType.OCT:
+            case ScalarDataType.OCT:
                 return oct(0)
-            case DataType.COMPLEX:
+            case ScalarDataType.COMPLEX:
                 return complex("0")
-            case DataType.BASE64:
+            case ScalarDataType.BASE64:
                 return ""
-            case DataType.BASE64E:
+            case ScalarDataType.BASE64E:
                 return bytes("".encode("utf-8"))
-            case DataType.BOOL:
+            case ScalarDataType.BOOL:
                 return False
-            case DataType.BYTES:
+            case ScalarDataType.BYTES:
                 return bytes("".encode("utf-8"))
-            case DataType.DATETIME:
+            case ScalarDataType.DATETIME:
                 return datetime.now()
-            case DataType.DATE:
+            case ScalarDataType.DATE:
                 return datetime.now().date()
-            case DataType.TIME:
+            case ScalarDataType.TIME:
                 return datetime.now().time()
-            case DataType.INTERVAL:
+            case ScalarDataType.INTERVAL:
                 return timedelta(seconds=0)
-            case DataType.IP_ADDRESS:
+            case ScalarDataType.IP_ADDRESS:
                 return ipaddress.ip_address("0.0.0.0")
-            case DataType.IP_NETWORK:
+            case ScalarDataType.IP_NETWORK:
                 return ipaddress.ip_network("0.0.0.0/1")
-            case DataType.URL:
+            case ScalarDataType.URL:
                 return urllib.parse.urlparse("")
-            case DataType.RANGE:
+            case ScalarDataType.RANGE:
                 return range(1)
-            case DataType.ENV:
+            case ScalarDataType.ENV:
                 return ""
-            case DataType.PATH:
+            case ScalarDataType.PATH:
                 return Path()
-            case DataType.SEMVER:
+            case ScalarDataType.SEMVER:
                 return semantic_version.Version("0.0.0")
-            case DataType.SEMVER:
+            case ScalarDataType.SEMVER:
                 return re.compile("")
-            case DataType.DICT:
+            case CompoundDataType.DICT:
                 return {}
-            case DataType.LIST:
+            case CompoundDataType.LIST:
                 return []
-            case DataType.SET:
+            case CompoundDataType.SET:
                 return set()
-            case DataType.TUPLE:
+            case CompoundDataType.TUPLE:
                 return tuple()
         raise NotImplementedError(
             f"Still need to add default for type {cast_type.value}",

@@ -12,6 +12,10 @@ class EnumDict(Enum):
 
 
 class DataType(EnumDict):
+    pass
+
+
+class ScalarDataType(DataType):
     ANY = "any"
     INT = "int"
     DEC = "dec"
@@ -38,26 +42,31 @@ class DataType(EnumDict):
     SEMVER = "semver"
     REGEX = "regex"
 
+
+class CompoundDataType(DataType):
     LIST = "list"
     SET = "set"
     DICT = "dict"
     TUPLE = "tuple"
-    ENUM = "enum"
-    STRUCT = "struct"
-
-    INTERFACE = "interface"
-    ALIAS = "alias"
+    # ENUM = "enum"
+    # STRUCT = "struct"
+    #
+    # INTERFACE = "interface"
+    # ALIAS = "alias"
     UNKNOWN = "unknown"
 
 
-COMPOUND_TYPES = (
-    DataType.LIST,
-    DataType.SET,
-    DataType.DICT,
-    DataType.TUPLE,
-    DataType.ENUM,
-    DataType.STRUCT,
-)
+ALL_DATA_TYPE_VALUES = (*ScalarDataType.values(), *CompoundDataType.values())
+
+
+# COMPOUND_TYPES = (
+#     DataType.LIST,
+#     DataType.SET,
+#     DataType.DICT,
+#     DataType.TUPLE,
+#     DataType.ENUM,
+#     DataType.STRUCT,
+# )
 
 
 class Operator(EnumDict):
@@ -98,6 +107,7 @@ MULTI_CHAR_OPERATORS = (
 )
 
 ITERATOR_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
+ITERATOR_ITEM_VALUES = tuple(item.value for item in ITERATOR_ITEMS)
 
 OPERATORS_TO_IGNORE = ("_",)
 

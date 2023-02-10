@@ -1,1 +1,1 @@
-my_page :url http://www.example.com/index.html
+my_page :url: http://www.example.com/index.html

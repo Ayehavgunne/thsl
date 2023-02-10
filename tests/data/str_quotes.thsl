@@ -1,1 +1,1 @@
-name_quotes :str " My name"
+name_quotes :str: " My name"

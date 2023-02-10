@@ -1,4 +1,4 @@
-my_list
+my_list:
 	- :int: 1
 	- :float: 3.14159
 	- :dec: 2.11

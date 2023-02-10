@@ -1,4 +1,4 @@
-multi_line_str :str "This
+multi_line_str :str: "This
 string is
     on multiple
          lines.

@@ -1,1 +1,1 @@
-my_path :path /usr/local
+my_path :path: /usr/local

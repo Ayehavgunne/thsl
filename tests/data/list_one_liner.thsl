@@ -1,1 +1,1 @@
-list_one_liner :int [1, 2, 4, 7]
+list_one_liner :int: [1, 2, 4, 7]

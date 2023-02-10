@@ -1,1 +1,1 @@
-escaping_single_quotes :str 'My name is \{name\}'
+escaping_single_quotes :str: 'My name is \{name\}'

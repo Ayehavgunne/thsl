@@ -1,4 +1,4 @@
-homogeneous_list :int
+homogeneous_list :int:
 	- 1
 	- 2
 	- 4

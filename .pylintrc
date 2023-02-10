@@ -1,9 +1,0 @@
-[MASTER]
-persistent=yes
-jobs=4
-unsafe-load-any-extension=no
-
-[MESSAGES CONTROL]
-disable=missing-docstring,too-many-lines,bad-continuation,too-few-public-methods,no-name-in-module,too-many-arguments,no-member,too-many-instance-attributes,duplicate-code,arguments-differ,too-many-locals,useless-super-delegation,fixme
-good-names=x,y,i,j,k,ex,Run,_
-extension-pkg-allow-list=pygame

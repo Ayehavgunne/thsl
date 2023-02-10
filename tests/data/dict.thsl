@@ -1,0 +1,6 @@
+graphics:
+	target_framerate :int: 60
+	fullscreen :bool: false
+	resolution :dict:
+		width :int: 1920
+		height :int: 1080

@@ -4,7 +4,7 @@ TEST := ${ROOT}tests
 .PHONY: black black-check usort usort-check format format-check mypy ruff ruff-fix fix test check
 
 black:
-	pdm run black ${SRC}
+	pdm run black --preview ${SRC}
 
 black-check:
 	pdm run black --check --diff ${SRC}

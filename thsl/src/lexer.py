@@ -32,13 +32,7 @@ class Token:
     meta_data: TokenMetaData | None = field(compare=False, default=None)
 
     def __str__(self) -> str:
-        return (
-            f"Token("
-            f"type={self.type.name}, "
-            f"value={self.value!r}, "
-            f"line={self.line}"
-            f")"
-        )
+        return f"Token(type={self.type.name}, value={self.value!r}, line={self.line})"
 
 
 class TypeState(Enum):

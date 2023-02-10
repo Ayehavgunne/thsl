@@ -381,6 +381,17 @@ def test_list_of_dicts():
     assert actual == expected
 
 
+def test_list_of_dicts_multiline():
+    actual = thsl.load(DATA_DIR / "list_of_dicts_multiline.thsl")
+    expected = {
+        "list_of_dicts": [
+            {"one": 1, "two": 2},
+            {"three": 3, "four": 4},
+        ]
+    }
+    assert actual == expected
+
+
 def test_set():
     actual = thsl.load(DATA_DIR / "set.thsl")
     expected = {"a_set": {1, 2, 3}}

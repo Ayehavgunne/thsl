@@ -203,51 +203,41 @@ def test_value(lexer, config, expected_key, index):
 
 
 def test_nesting(lexer):
-    lexer.text = """graphics:
-\ttarget_framerate :int: 60
-"""
+    lexer.text = "graphics:\n\ttarget_framerate :int: 60\n"
     expected = [
-        Token(type=TokenType.KEY, value="graphics", line=1, indent=0, column=9),
-        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0, column=10),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=10),
-        Token(
-            type=TokenType.KEY, value="target_framerate", line=2, indent=1, column=18
-        ),
-        Token(type=TokenType.TYPE, value="int", line=2, indent=1, column=23),
-        Token(type=TokenType.VALUE, value="60", line=2, indent=1, column=27),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=27),
-        Token(type=TokenType.EOF, value="EOF", line=3, indent=0, column=1),
+        Token(type=TokenType.KEY, value="graphics", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.KEY, value="target_framerate", line=2, indent=1),
+        Token(type=TokenType.TYPE, value="int", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="60", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=3, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
 
 
 def test_list(lexer):
-    lexer.text = """my_list :int:  # comment
-\t- 1
-\t- 2
-\t- 4
-\t# hello
-\t- 7
-"""
+    lexer.text = "my_list :int:  # comment\n\t- 1\n\t- 2\n\t- 4\n\t# hello\n\t- 7\n"
     expected = [
-        Token(type=TokenType.KEY, value="my_list", line=1, indent=0, column=8),
-        Token(type=TokenType.TYPE, value="int", line=1, indent=0, column=13),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=25),
-        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="1", line=2, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value="-", line=3, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="2", line=3, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value="-", line=4, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="4", line=4, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1, column=9),
-        Token(type=TokenType.OPERATOR, value="-", line=6, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="7", line=6, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=1, column=5),
-        Token(type=TokenType.EOF, value="EOF", line=7, indent=0, column=1),
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="2", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=4, indent=1),
+        Token(type=TokenType.VALUE, value="4", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=6, indent=1),
+        Token(type=TokenType.VALUE, value="7", line=6, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=7, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
@@ -276,24 +266,59 @@ def test_one_line_list(lexer):
 def test_list_of_dicts(lexer):
     lexer.text = "my_list:\n\t- {one :int: 1}\n\t- {two :float: 2}\n"
     expected = [
-        Token(type=TokenType.KEY, value="my_list", line=1, indent=0, column=8),
-        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0, column=9),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=9),
-        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1, column=3),
-        Token(type=TokenType.OPERATOR, value="{", line=2, indent=1, column=5),
-        Token(type=TokenType.KEY, value="one", line=2, indent=1, column=8),
-        Token(type=TokenType.TYPE, value="int", line=2, indent=1, column=13),
-        Token(type=TokenType.VALUE, value="1", line=2, indent=1, column=16),
-        Token(type=TokenType.OPERATOR, value="}", line=2, indent=1, column=17),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=17),
-        Token(type=TokenType.OPERATOR, value="-", line=3, indent=1, column=3),
-        Token(type=TokenType.OPERATOR, value="{", line=3, indent=1, column=5),
-        Token(type=TokenType.KEY, value="two", line=3, indent=1, column=8),
-        Token(type=TokenType.TYPE, value="float", line=3, indent=1, column=15),
-        Token(type=TokenType.VALUE, value="2", line=3, indent=1, column=18),
-        Token(type=TokenType.OPERATOR, value="}", line=3, indent=1, column=19),
-        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1, column=19),
-        Token(type=TokenType.EOF, value="EOF", line=4, indent=0, column=1),
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value="{", line=2, indent=1),
+        Token(type=TokenType.KEY, value="one", line=2, indent=1),
+        Token(type=TokenType.TYPE, value="int", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value="}", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value="{", line=3, indent=1),
+        Token(type=TokenType.KEY, value="two", line=3, indent=1),
+        Token(type=TokenType.TYPE, value="float", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="2", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value="}", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=4, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_list_of_dicts_multiline(lexer):
+    lexer.text = (
+        "my_list:\n\t-\n\t\tone :int: 1\n\t\ttwo :float: 2\n\t-\n\t\tthree :int: 3"
+        "\n\t\tfour :int: 4\n"
+    )
+    expected = [
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.KEY, value="one", line=3, indent=2),
+        Token(type=TokenType.TYPE, value="int", line=3, indent=2),
+        Token(type=TokenType.VALUE, value="1", line=3, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=2),
+        Token(type=TokenType.KEY, value="two", line=4, indent=2),
+        Token(type=TokenType.TYPE, value="float", line=4, indent=2),
+        Token(type=TokenType.VALUE, value="2", line=4, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=2),
+        Token(type=TokenType.OPERATOR, value="-", line=5, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.KEY, value="three", line=6, indent=2),
+        Token(type=TokenType.TYPE, value="int", line=6, indent=2),
+        Token(type=TokenType.VALUE, value="3", line=6, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=2),
+        Token(type=TokenType.KEY, value="four", line=7, indent=2),
+        Token(type=TokenType.TYPE, value="int", line=7, indent=2),
+        Token(type=TokenType.VALUE, value="4", line=7, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=7, indent=2),
+        Token(type=TokenType.EOF, value="EOF", line=8, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
@@ -302,84 +327,73 @@ def test_list_of_dicts(lexer):
 def test_one_line_dict(lexer):
     lexer.text = "my_dict: {one :int: 1, two :float: 2}\n"
     expected = [
-        Token(type=TokenType.KEY, value="my_dict", line=1, indent=0, column=8),
-        Token(type=TokenType.OPERATOR, value="{", line=1, indent=0, column=11),
-        Token(type=TokenType.KEY, value="one", line=1, indent=0, column=14),
-        Token(type=TokenType.TYPE, value="int", line=1, indent=0, column=19),
-        Token(type=TokenType.VALUE, value="1", line=1, indent=0, column=22),
-        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0, column=23),
-        Token(type=TokenType.KEY, value="two", line=1, indent=0, column=27),
-        Token(type=TokenType.TYPE, value="float", line=1, indent=0, column=34),
-        Token(type=TokenType.VALUE, value="2", line=1, indent=0, column=37),
-        Token(type=TokenType.OPERATOR, value="}", line=1, indent=0, column=38),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=38),
-        Token(type=TokenType.EOF, value="EOF", line=2, indent=0, column=1),
+        Token(type=TokenType.KEY, value="my_dict", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="{", line=1, indent=0),
+        Token(type=TokenType.KEY, value="one", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="1", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=",", line=1, indent=0),
+        Token(type=TokenType.KEY, value="two", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="float", line=1, indent=0),
+        Token(type=TokenType.VALUE, value="2", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="}", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
 
 
 def test_set(lexer):
-    lexer.text = """my_set :int:
-\t> 1
-\t> 2
-\t> 4
-\t> 7
-"""
+    lexer.text = "my_set :int:\n\t> 1\n\t> 2\n\t> 4\n\t> 7\n"
     expected = [
-        Token(type=TokenType.KEY, value="my_set", line=1, indent=0, column=7),
-        Token(type=TokenType.TYPE, value="int", line=1, indent=0, column=12),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=13),
-        Token(type=TokenType.OPERATOR, value=">", line=2, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="1", line=2, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=">", line=3, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="2", line=3, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=">", line=4, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="4", line=4, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=">", line=5, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="7", line=5, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1, column=5),
-        Token(type=TokenType.EOF, value="EOF", line=6, indent=0, column=1),
+        Token(type=TokenType.KEY, value="my_set", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=">", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value=">", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="2", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value=">", line=4, indent=1),
+        Token(type=TokenType.VALUE, value="4", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.OPERATOR, value=">", line=5, indent=1),
+        Token(type=TokenType.VALUE, value="7", line=5, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=6, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
 
 
 def test_tuple(lexer):
-    lexer.text = """my_tuple :int:
-\t) 1
-\t) 2
-\t) 4
-\t) 7
-"""
+    lexer.text = "my_tuple :int:\n\t) 1\n\t) 2\n\t) 4\n\t) 7\n"
     expected = [
-        Token(type=TokenType.KEY, value="my_tuple", line=1, indent=0, column=7),
-        Token(type=TokenType.TYPE, value="int", line=1, indent=0, column=12),
-        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0, column=13),
-        Token(type=TokenType.OPERATOR, value=")", line=2, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="1", line=2, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=")", line=3, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="2", line=3, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=")", line=4, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="4", line=4, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1, column=5),
-        Token(type=TokenType.OPERATOR, value=")", line=5, indent=1, column=3),
-        Token(type=TokenType.VALUE, value="7", line=5, indent=1, column=5),
-        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1, column=5),
-        Token(type=TokenType.EOF, value="EOF", line=6, indent=0, column=1),
+        Token(type=TokenType.KEY, value="my_tuple", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="int", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value=")", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value=")", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="2", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value=")", line=4, indent=1),
+        Token(type=TokenType.VALUE, value="4", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.OPERATOR, value=")", line=5, indent=1),
+        Token(type=TokenType.VALUE, value="7", line=5, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=6, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
 
 
 def test_tokenization(lexer):
-    config = "my_value :bool: false\n"
-    lexer.text = config
+    lexer.text = "my_value :bool: false\n"
     expected = [
         Token(type=TokenType.KEY, value="my_value", line=1, indent=0),
         Token(type=TokenType.TYPE, value="bool", line=1, indent=0),

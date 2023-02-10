@@ -1,7 +1,14 @@
 from pathlib import Path
 
 from thsl.src.abstract_syntax_tree import AST, Collection, Key, Value, Void
-from thsl.src.grammar import DataType, ITERATOR_ITEMS, Operator, TokenType
+from thsl.src.grammar import (
+    COMPOUND_ITEM_VALUES,
+    CompoundDataType,
+    DataType,
+    Operator,
+    ScalarDataType,
+    TokenType,
+)
 from thsl.src.lexer import Lexer, Token
 
 
@@ -19,7 +26,11 @@ class Parser:
         self._indent = 0
 
     def parse(self) -> Collection:
-        root = Collection(type=DataType.DICT, line=self.line, column=self.column)
+        root = Collection(
+            type=CompoundDataType.DICT,
+            line=self.line,
+            column=self.column,
+        )
         while self.type != TokenType.EOF:
             statements = self.statement_list()
             root.items.extend(statements)
@@ -90,7 +101,7 @@ class Parser:
                 results.append(statement)
             if self.type == TokenType.NEWLINE or (
                 self.type == TokenType.OPERATOR
-                and self.current_token.value in [item.value for item in ITERATOR_ITEMS]
+                and self.current_token.value in COMPOUND_ITEM_VALUES
             ):
                 self.next_token()
             if self.type == TokenType.EOF:
@@ -110,7 +121,10 @@ class Parser:
             value = self.eat_value()
             value.type = value_type
             return value
-        if self.type == TokenType.OPERATOR:
+        if self.type == TokenType.OPERATOR and self.value not in (
+            Operator.LIST_DELIMITER.value,
+            Operator.RCURLYBRACKET.value,
+        ):
             return self.eat_operator()
         self.next_token()
         return None
@@ -124,11 +138,11 @@ class Parser:
         value: Value | Collection
         upcoming_token = self.preview(1)
         if (
-            key_type == DataType.DICT or key_type == DataType.UNKNOWN
+            key_type == CompoundDataType.DICT or key_type == CompoundDataType.UNKNOWN
         ) and self.type == TokenType.NEWLINE:
             self.next_token()
         if (
-            key_type == DataType.DICT or key_type == DataType.UNKNOWN
+            key_type == CompoundDataType.DICT or key_type == CompoundDataType.UNKNOWN
         ) and self.type == TokenType.KEY:
             value = self.make_collection(key_type)
         elif self.type == TokenType.OPERATOR:
@@ -141,16 +155,12 @@ class Parser:
             self.type == TokenType.NEWLINE and upcoming_token.type == TokenType.OPERATOR
         ):
             self.next_token()
-            if self.current_token.value in (
-                Operator.LIST_ITEM.value,
-                Operator.SET_ITEM.value,
-                Operator.TUPLE_ITEM.value,
-            ):
+            if self.current_token.value in COMPOUND_ITEM_VALUES:
                 value = self.eat_operator()
             else:
                 self.next_token()
                 subtype = key_type
-                key_type = DataType.LIST
+                key_type = CompoundDataType.LIST
                 value = self.make_collection(key_type)
         else:
             value = self.eat_value()
@@ -165,8 +175,10 @@ class Parser:
 
     def eat_type(self) -> DataType:
         if self.type == TokenType.NEWLINE or self.value == Operator.LCURLYBRACKET.value:
-            return DataType.DICT
-        return DataType(self.value)
+            return CompoundDataType.DICT
+        if self.value in ScalarDataType.values():
+            return ScalarDataType(self.value)
+        return CompoundDataType(self.value)
 
     def eat_value(self) -> Value:
         value: str | Void
@@ -188,7 +200,7 @@ class Parser:
             closing_operator = Operator.RCURLYBRACKET.value
         elif self.value == Operator.LPAREN.value:
             closing_operator = Operator.RPAREN.value
-        elif self.value in [item.value for item in ITERATOR_ITEMS]:
+        elif self.value in COMPOUND_ITEM_VALUES:
             value.items.extend(self.eat_iterator_items())
             return value
         else:
@@ -219,14 +231,12 @@ class Parser:
         self.set_indent()
         while self.current_token_indent == current_indent:
             self.next_token()
-            if self.current_token.value in (
-                Operator.LIST_ITEM.value,
-                Operator.SET_ITEM.value,
-                Operator.TUPLE_ITEM.value,
-            ):
+            if self.current_token.value in COMPOUND_ITEM_VALUES:
                 self.next_token()
             if self.current_token.type == TokenType.VALUE:
                 items.append(self.eat_value())
+            elif self.current_token.type == TokenType.OPERATOR:
+                items.append(self.eat_operator())
             else:
                 items.append(self.statement())
         return [item for item in items if item is not None]

@@ -1,6 +1,13 @@
 from dataclasses import dataclass, field
 
-from thsl.src.grammar import DataType, Operator
+from thsl.src.grammar import (
+    CompoundDataType,
+    DataType,
+    DICT_OPERATORS,
+    LIST_OPERATORS,
+    SET_OPERATORS,
+    TUPLE_OPERATORS,
+)
 
 
 @dataclass
@@ -29,18 +36,19 @@ class Collection(AST):
     items: list[AST] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        # convert to match statement
-        if isinstance(self.type, str):
-            if self.type in (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value):
-                self.type = DataType.LIST
-            elif self.type == Operator.LCURLYBRACKET.value:
-                self.type = DataType.DICT
-            elif self.type == Operator.LANGLEBRACKET.value:
-                self.type = DataType.SET
-            elif self.type == Operator.LPAREN.value:
-                self.type = DataType.TUPLE
-            else:
+        match self.type:
+            case str() as collection_type if collection_type in LIST_OPERATORS:
+                self.type = CompoundDataType.LIST
+            case str() as collection_type if collection_type in SET_OPERATORS:
+                self.type = CompoundDataType.SET
+            case str() as collection_type if collection_type in TUPLE_OPERATORS:
+                self.type = CompoundDataType.TUPLE
+            case str() as collection_type if collection_type in DICT_OPERATORS:
+                self.type = CompoundDataType.DICT
+            case str():
                 raise NotImplementedError
+            case _:
+                return None
 
 
 @dataclass

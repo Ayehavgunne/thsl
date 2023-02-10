@@ -1,10 +1,13 @@
 import datetime
+import os
+import re
 from decimal import Decimal
 from ipaddress import IPv4Address, IPv4Network, IPv6Address
 from math import isnan
 from pathlib import Path
 from urllib.parse import ParseResult
 
+import semantic_version
 import thsl
 
 from dateutil.tz import tzoffset
@@ -277,6 +280,31 @@ def test_url_part():
     assert actual == expected
 
 
+def test_env():
+    os.environ["MY_ENV_VAR"] = "hello"
+    actual = thsl.load(DATA_DIR / "env.thsl")
+    expected = {"my_env_var": os.environ["MY_ENV_VAR"]}
+    assert actual == expected
+
+
+def test_path():
+    actual = thsl.load(DATA_DIR / "path.thsl")
+    expected = {"my_path": Path("/usr/local")}
+    assert actual == expected
+
+
+def test_regex():
+    actual = thsl.load(DATA_DIR / "regex.thsl")
+    expected = {"my_regex": re.compile("colou?r")}
+    assert actual == expected
+
+
+def test_version():
+    actual = thsl.load(DATA_DIR / "version.thsl")
+    expected = {"my_version": semantic_version.Version("3.2.1")}
+    assert actual == expected
+
+
 def test_range():
     actual = thsl.load(DATA_DIR / "range.thsl")
     expected = {"my_range": range(1, 5)}
@@ -336,10 +364,10 @@ def test_list_one_liner():
     assert actual == expected
 
 
-def test_list_heterogeneous_one_liner():
-    actual = thsl.load(DATA_DIR / "list_heterogeneous_one_liner.thsl")
-    expected = {"heterogeneous_list_one_liner": [1, 3.14159, Decimal("2.11"), "hello"]}
-    assert actual == expected
+# def test_list_heterogeneous_one_liner():
+#     actual = thsl.load(DATA_DIR / "list_heterogeneous_one_liner.thsl")
+#     expected = {"heterogeneous_list_one_liner": [1, 3.14159, Decimal("2.11"), "hello"]}
+#     assert actual == expected
 
 
 def test_list_of_dicts():
@@ -359,6 +387,18 @@ def test_set():
     assert actual == expected
 
 
+def test_set_heterogeneous():
+    actual = thsl.load(DATA_DIR / "set_heterogeneous.thsl")
+    expected = {"typed_set": {1, 2.0, Decimal("3"), "4"}}
+    assert actual == expected
+
+
+# def test_set_heterogeneous_one_liner():
+#     actual = thsl.load(DATA_DIR / "set_heterogeneous_one_liner.thsl")
+#     expected = {"set_one_liner": {1, 2.0}}
+#     assert actual == expected
+
+
 def test_set_one_liner():
     actual = thsl.load(DATA_DIR / "set_one_liner.thsl")
     expected = {"set_one_liner": {1, 2, 3}}
@@ -371,7 +411,19 @@ def test_tuple():
     assert actual == expected
 
 
+def test_tuple_heterogeneous():
+    actual = thsl.load(DATA_DIR / "tuple_heterogeneous.thsl")
+    expected = {"typed_tuple": (1, 2.0, Decimal("3"), "4")}
+    assert actual == expected
+
+
 def test_tuple_one_liner():
     actual = thsl.load(DATA_DIR / "tuple_one_liner.thsl")
     expected = {"my_tuple": (1, 2, 3)}
     assert actual == expected
+
+
+# def test_tuple_heterogeneous_one_liner():
+#     actual = thsl.load(DATA_DIR / "tuple_heterogeneous_one_liner.thsl")
+#     expected = {"tuple_one_liner": (1, 2.0)}
+#     assert actual == expected

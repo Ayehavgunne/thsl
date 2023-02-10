@@ -47,8 +47,8 @@ ignore_missing_imports = true
 [tool.ruff]
 select = ["ALL"]
 ignore = [
-    "D", "C", "I", "ANN101", "ANN102", "A003", "EM101", "EM102", "TRY003", "FBT001",
-    "FBT002", "TCH003", "PGH003", "ERA001", "E999",
+    "D", "C", "I", "PD", "ANN101", "ANN102", "A003", "EM101", "EM102", "TRY003",
+    "FBT001", "FBT002", "TCH003", "PGH003", "ERA001", "E999",
 ]
 
 #fixable = []

@@ -12,7 +12,12 @@ class EnumDict(Enum):
 
 
 class DataType(EnumDict):
-    ANY = "any"
+    pass
+
+
+class ScalarDataType(DataType):
+    BOOL = "bool"
+    BYTES = "bytes"
     INT = "int"
     DEC = "dec"
     FLOAT = "float"
@@ -21,10 +26,8 @@ class DataType(EnumDict):
     COMPLEX = "complex"
     BASE64 = "base64"
     BASE64E = "base64e"
-    STR = "str"
     CHAR = "char"
-    BOOL = "bool"
-    BYTES = "bytes"
+    STR = "str"
     RANGE = "range"
     DATE = "date"
     DATETIME = "datetime"
@@ -38,26 +41,16 @@ class DataType(EnumDict):
     SEMVER = "semver"
     REGEX = "regex"
 
+
+class CompoundDataType(DataType):
     LIST = "list"
     SET = "set"
     DICT = "dict"
     TUPLE = "tuple"
-    ENUM = "enum"
-    STRUCT = "struct"
-
-    INTERFACE = "interface"
-    ALIAS = "alias"
     UNKNOWN = "unknown"
 
 
-COMPOUND_TYPES = (
-    DataType.LIST,
-    DataType.SET,
-    DataType.DICT,
-    DataType.TUPLE,
-    DataType.ENUM,
-    DataType.STRUCT,
-)
+ALL_DATA_TYPE_VALUES = (*ScalarDataType.values(), *CompoundDataType.values())
 
 
 class Operator(EnumDict):
@@ -86,7 +79,14 @@ class Operator(EnumDict):
 
 
 OPENING_BRACKETS = (Operator.LPAREN, Operator.LSQUAREBRACKET, Operator.LCURLYBRACKET)
+OPENING_BRACKET_VALUES = tuple(item.value for item in OPENING_BRACKETS)
 CLOSING_BRACKETS = (Operator.RPAREN, Operator.RSQUAREBRACKET, Operator.RCURLYBRACKET)
+CLOSING_BRACKET_VALUES = tuple(item.value for item in CLOSING_BRACKETS)
+
+LIST_OPERATORS = (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value)
+SET_OPERATORS = (Operator.LANGLEBRACKET.value, Operator.SET_ITEM.value)
+TUPLE_OPERATORS = (Operator.LPAREN.value, Operator.TUPLE_ITEM.value)
+DICT_OPERATORS = (Operator.LCURLYBRACKET.value,)
 
 QUOTES = (Operator.SINGLE_QUOTE, Operator.DOUBLE_QUOTE)
 
@@ -97,7 +97,8 @@ MULTI_CHAR_OPERATORS = (
     Operator.EXTENDS,
 )
 
-ITERATOR_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
+COMPOUND_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
+COMPOUND_ITEM_VALUES = tuple(item.value for item in COMPOUND_ITEMS)
 
 OPERATORS_TO_IGNORE = ("_",)
 

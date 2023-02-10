@@ -5,8 +5,8 @@ from typing import Literal
 
 from thsl.src.grammar import (
     ALL_DATA_TYPE_VALUES,
+    CLOSING_BRACKET_VALUES,
     CompoundDataType,
-    DataType,
     MULTI_CHAR_OPERATORS,
     Operator,
     OPERATORS_TO_IGNORE,
@@ -77,8 +77,8 @@ class Lexer:
         self._current_char: str | None
         self._char_type: TokenType | None
         self._current_token: Token | None
-        self._current_data_type: DataType | None
-        self._last_data_type: DataType | None
+        self._current_data_type: ScalarDataType | None
+        self._last_data_type: ScalarDataType | None
         self._current_key: Token | None
         self._word: str
         self._word_type: TokenType | None
@@ -335,10 +335,16 @@ class Lexer:
 
         type_content_state: TypeContentState
 
-        if self._current_data_type:
+        if (
+            self._current_data_type is not None
+            and token.value not in CLOSING_BRACKET_VALUES
+        ):
             type_content_state = Homogeneous(self._current_data_type)
         else:
             type_content_state = Heterogeneous()
+
+        if token.value in CLOSING_BRACKET_VALUES:
+            self._current_data_type = None
 
         if token.value == Operator.LCURLYBRACKET.value:
             self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
@@ -410,9 +416,6 @@ class Lexer:
                 self._reset_word(),
             )
         if self._word in ALL_DATA_TYPE_VALUES:
-            # if self._current_key and self._current_data_type ==
-            # CompoundDataType.STRUCT:
-            #     self.user_types.append(self._current_key.value)
             return self._make_token(
                 TokenType.TYPE,
                 self._reset_word(),
@@ -450,8 +453,6 @@ class Lexer:
             token = self._make_token(TokenType.KEY, self._reset_word())
         self._current_key = token
         return token
-
-    # def _eat_constant(self, value: str = None) -> Token:
 
     def _eat_value(self, value: str, meta_data: TokenMetaData | None = None) -> Token:
         return self._make_token(TokenType.VALUE, value, meta_data=meta_data)

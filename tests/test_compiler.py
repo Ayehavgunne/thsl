@@ -387,6 +387,18 @@ def test_set():
     assert actual == expected
 
 
+def test_set_heterogeneous():
+    actual = thsl.load(DATA_DIR / "set_heterogeneous.thsl")
+    expected = {"typed_set": {1, 2.0, Decimal("3"), "4"}}
+    assert actual == expected
+
+
+# def test_set_heterogeneous_one_liner():
+#     actual = thsl.load(DATA_DIR / "set_heterogeneous_one_liner.thsl")
+#     expected = {"set_one_liner": {1, 2.0}}
+#     assert actual == expected
+
+
 def test_set_one_liner():
     actual = thsl.load(DATA_DIR / "set_one_liner.thsl")
     expected = {"set_one_liner": {1, 2, 3}}
@@ -399,7 +411,19 @@ def test_tuple():
     assert actual == expected
 
 
+def test_tuple_heterogeneous():
+    actual = thsl.load(DATA_DIR / "tuple_heterogeneous.thsl")
+    expected = {"typed_tuple": (1, 2.0, Decimal("3"), "4")}
+    assert actual == expected
+
+
 def test_tuple_one_liner():
     actual = thsl.load(DATA_DIR / "tuple_one_liner.thsl")
     expected = {"my_tuple": (1, 2, 3)}
     assert actual == expected
+
+
+# def test_tuple_heterogeneous_one_liner():
+#     actual = thsl.load(DATA_DIR / "tuple_heterogeneous_one_liner.thsl")
+#     expected = {"tuple_one_liner": (1, 2.0)}
+#     assert actual == expected

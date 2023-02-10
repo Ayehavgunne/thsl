@@ -86,7 +86,7 @@ list_of_dicts:
 	- {three :int: 3, four :int: 4}
 
 dict_one_liner: {one :int: 1, two :int: 2}
-uniform_list_one_liner :int: [1, 2, 3,]  # trailing commas are valid, and encouraged!
+uniform_list_one_liner :int: [1, 2, 3,]  # trailing commas are valid and encouraged!
 heterogeneous_list_one_liner: [:int: 1, :float: 3.14159, :dec: 2.11, :str: hello]
 
 a_set :int:
@@ -100,9 +100,11 @@ a_tuple :int:
 	) 2
 	) 3
 tuple_one_liner :int: (1, 2, 3)
-
-
-# Experimental syntax
+typed_tuple:
+	) :int: 1
+	) :float: 2
+	) :dec: 3
+	) :str: 4
 
 my_list:  # list of multi-line dicts
 	-
@@ -112,12 +114,6 @@ my_list:  # list of multi-line dicts
 		three :int: 3
 		four :int: 4
 
-typed_tuple:
-	) :int: 1
-	) :float: 2
-	) :dec: 3
-	) :str: 4
-
 named_tuple:
 	) one :int
 	) two :int
@@ -125,56 +121,3 @@ named_tuple:
 
 # spaces are not required between entries or key-values but they sure do help readability
 tuple_one_liner: (:int:1,:float:2)
-
-# structs can be very similar to dictionaries but could be handled differently by the consuming language
-# Python could create a dataclass for example
-# either dynamically or human-readable code can be generated
-MyStruct :struct:
-	NestedStruct :struct:
-		first :int: 1  # provided values will be defaults for a struct
-		second :int: 2
-	my_dict:
-		third :float: 3
-		fourth :str: 4
-	key :str: value
-	recursion :MyStruct  # maybe, maybe not
-
-AnotherStruct :struct:
-	ref_other_struct :MyStruct
-
-an_enum :enum:
-	red  # enums entries don't need a type or a value but they can
-	blue
-
-my_int :alias: :int
-
-# an interface that must be implemented
-MyInterface :interface:
-	a_method(:int, :float) :int  # takes int and float and returns an int
-	no_return_value(:str)  # this doesn't have a return value
-	using_alias(:str) :my_int
-	default_values(:str hello, :int 5) :str  # default values can be specified for parameters
-	return_type_unknown() :any
-
-# decorators add metadata to fields
-@immutable
-some_data :struct:
-
-	@required
-	my_name :str
-
-	@optional  # or @nullable?
-	my_age :int
-
-Config :struct:
-	debug :bool: false
-	show_fps :bool: true
-	Graphics :struct:
-		target_framerate :int: 60
-		fullscreen :bool: false
-		hardware_acceleration :bool: false
-		vsync :bool: false
-		scaled :bool: true
-		Resolution :struct:  # 16:9 aspect ratio only please
-			width :int: 1920
-			height :int: 1080

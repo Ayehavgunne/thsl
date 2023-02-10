@@ -16,7 +16,8 @@ class DataType(EnumDict):
 
 
 class ScalarDataType(DataType):
-    ANY = "any"
+    BOOL = "bool"
+    BYTES = "bytes"
     INT = "int"
     DEC = "dec"
     FLOAT = "float"
@@ -25,10 +26,8 @@ class ScalarDataType(DataType):
     COMPLEX = "complex"
     BASE64 = "base64"
     BASE64E = "base64e"
-    STR = "str"
     CHAR = "char"
-    BOOL = "bool"
-    BYTES = "bytes"
+    STR = "str"
     RANGE = "range"
     DATE = "date"
     DATETIME = "datetime"
@@ -48,25 +47,10 @@ class CompoundDataType(DataType):
     SET = "set"
     DICT = "dict"
     TUPLE = "tuple"
-    # ENUM = "enum"
-    # STRUCT = "struct"
-    #
-    # INTERFACE = "interface"
-    # ALIAS = "alias"
     UNKNOWN = "unknown"
 
 
 ALL_DATA_TYPE_VALUES = (*ScalarDataType.values(), *CompoundDataType.values())
-
-
-# COMPOUND_TYPES = (
-#     DataType.LIST,
-#     DataType.SET,
-#     DataType.DICT,
-#     DataType.TUPLE,
-#     DataType.ENUM,
-#     DataType.STRUCT,
-# )
 
 
 class Operator(EnumDict):
@@ -95,7 +79,14 @@ class Operator(EnumDict):
 
 
 OPENING_BRACKETS = (Operator.LPAREN, Operator.LSQUAREBRACKET, Operator.LCURLYBRACKET)
+OPENING_BRACKET_VALUES = tuple(item.value for item in OPENING_BRACKETS)
 CLOSING_BRACKETS = (Operator.RPAREN, Operator.RSQUAREBRACKET, Operator.RCURLYBRACKET)
+CLOSING_BRACKET_VALUES = tuple(item.value for item in CLOSING_BRACKETS)
+
+LIST_OPERATORS = (Operator.LSQUAREBRACKET.value, Operator.LIST_ITEM.value)
+SET_OPERATORS = (Operator.LANGLEBRACKET.value, Operator.SET_ITEM.value)
+TUPLE_OPERATORS = (Operator.LPAREN.value, Operator.TUPLE_ITEM.value)
+DICT_OPERATORS = (Operator.LCURLYBRACKET.value,)
 
 QUOTES = (Operator.SINGLE_QUOTE, Operator.DOUBLE_QUOTE)
 
@@ -106,8 +97,8 @@ MULTI_CHAR_OPERATORS = (
     Operator.EXTENDS,
 )
 
-ITERATOR_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
-ITERATOR_ITEM_VALUES = tuple(item.value for item in ITERATOR_ITEMS)
+COMPOUND_ITEMS = (Operator.LIST_ITEM, Operator.TUPLE_ITEM, Operator.SET_ITEM)
+COMPOUND_ITEM_VALUES = tuple(item.value for item in COMPOUND_ITEMS)
 
 OPERATORS_TO_IGNORE = ("_",)
 

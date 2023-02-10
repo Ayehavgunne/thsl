@@ -2,9 +2,9 @@ from pathlib import Path
 
 from thsl.src.abstract_syntax_tree import AST, Collection, Key, Value, Void
 from thsl.src.grammar import (
+    COMPOUND_ITEM_VALUES,
     CompoundDataType,
     DataType,
-    ITERATOR_ITEM_VALUES,
     Operator,
     ScalarDataType,
     TokenType,
@@ -27,7 +27,9 @@ class Parser:
 
     def parse(self) -> Collection:
         root = Collection(
-            type=CompoundDataType.DICT, line=self.line, column=self.column
+            type=CompoundDataType.DICT,
+            line=self.line,
+            column=self.column,
         )
         while self.type != TokenType.EOF:
             statements = self.statement_list()
@@ -99,7 +101,7 @@ class Parser:
                 results.append(statement)
             if self.type == TokenType.NEWLINE or (
                 self.type == TokenType.OPERATOR
-                and self.current_token.value in ITERATOR_ITEM_VALUES
+                and self.current_token.value in COMPOUND_ITEM_VALUES
             ):
                 self.next_token()
             if self.type == TokenType.EOF:
@@ -153,7 +155,7 @@ class Parser:
             self.type == TokenType.NEWLINE and upcoming_token.type == TokenType.OPERATOR
         ):
             self.next_token()
-            if self.current_token.value in ITERATOR_ITEM_VALUES:
+            if self.current_token.value in COMPOUND_ITEM_VALUES:
                 value = self.eat_operator()
             else:
                 self.next_token()
@@ -198,7 +200,7 @@ class Parser:
             closing_operator = Operator.RCURLYBRACKET.value
         elif self.value == Operator.LPAREN.value:
             closing_operator = Operator.RPAREN.value
-        elif self.value in ITERATOR_ITEM_VALUES:
+        elif self.value in COMPOUND_ITEM_VALUES:
             value.items.extend(self.eat_iterator_items())
             return value
         else:
@@ -229,7 +231,7 @@ class Parser:
         self.set_indent()
         while self.current_token_indent == current_indent:
             self.next_token()
-            if self.current_token.value in ITERATOR_ITEM_VALUES:
+            if self.current_token.value in COMPOUND_ITEM_VALUES:
                 self.next_token()
             if self.current_token.type == TokenType.VALUE:
                 items.append(self.eat_value())

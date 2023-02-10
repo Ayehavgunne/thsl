@@ -60,6 +60,8 @@ class Compiler:
                             subtype = self._current_key.type
                         if subtype == CompoundDataType.UNKNOWN:
                             subtype = value.type
+                        if value.type is not None:
+                            subtype = value.type
                         if isinstance(root, list):
                             root.append(
                                 self.cast_scalar(value.value, subtype),
@@ -93,8 +95,6 @@ class Compiler:
         result: Any = None
         if not isinstance(value, Void):
             match cast_type:
-                case ScalarDataType.ANY:
-                    return value
                 case ScalarDataType.INT:
                     result = int(value)
                 case ScalarDataType.STR:
@@ -161,8 +161,6 @@ class Compiler:
 
     def get_default_value(self, cast_type: DataType) -> Any:
         match cast_type:
-            case ScalarDataType.ANY:
-                return None  # maybe raise exception
             case ScalarDataType.INT:
                 return 0
             case ScalarDataType.STR:

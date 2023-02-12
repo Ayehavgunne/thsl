@@ -53,6 +53,10 @@ class Compiler:
                 case Collection() as collection:
                     if isinstance(root, list):
                         root.append(self._visit(collection))
+                    if isinstance(root, set):
+                        root.add(self._visit(collection))
+                    if isinstance(root, tuple):
+                        root = (*root, self._visit(collection))
                 case Value() as value:
                     if self._current_key is not None:
                         subtype = self._current_key.subtype

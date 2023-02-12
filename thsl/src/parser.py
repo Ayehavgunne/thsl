@@ -5,9 +5,13 @@ from thsl.src.grammar import (
     COMPOUND_ITEM_VALUES,
     CompoundDataType,
     DataType,
+    DICT_OPERATORS,
+    LIST_OPERATORS,
     Operator,
     ScalarDataType,
+    SET_OPERATORS,
     TokenType,
+    TUPLE_OPERATORS,
 )
 from thsl.src.lexer import Lexer, Token
 
@@ -225,6 +229,23 @@ class Parser:
             self.next_token()
         return value
 
+    def guess_unknown_data_type(self):
+        preview_distance = 1
+        while preview_token := self.preview(preview_distance):
+            preview_distance += 1
+            if preview_token.type == TokenType.NEWLINE:
+                continue
+            if preview_token.value in LIST_OPERATORS:
+                return CompoundDataType.LIST
+            if preview_token.value in SET_OPERATORS:
+                return CompoundDataType.SET
+            if preview_token.value in TUPLE_OPERATORS:
+                return CompoundDataType.TUPLE
+            if preview_token.value in DICT_OPERATORS:
+                return CompoundDataType.DICT
+            if preview_token.type == TokenType.KEY:
+                return CompoundDataType.DICT
+
     def eat_iterator_items(self) -> list[AST]:
         current_indent = self.current_token_indent
         items: list[AST] = []
@@ -237,6 +258,19 @@ class Parser:
                 items.append(self.eat_value())
             elif self.current_token.type == TokenType.OPERATOR:
                 items.append(self.eat_operator())
+            elif self.current_token.type == TokenType.TYPE:
+                current_type = self.eat_type()
+                if current_type.value == CompoundDataType.UNKNOWN.value:
+                    current_type = self.guess_unknown_data_type()
+                if isinstance(current_type, ScalarDataType):
+                    statement = self.statement()
+                    if statement:
+                        items.append(statement)
+                        continue
+                self.next_token()
+                if self.current_token.type == TokenType.NEWLINE:
+                    self.next_token()
+                items.append(self.make_collection(current_type))
             else:
                 statement = self.statement()
                 if statement:

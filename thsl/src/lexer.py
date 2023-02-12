@@ -190,6 +190,11 @@ class Lexer:
         current_word_type = self._word_type
         current_line_num = self._line_num
         current_indent_level = self._indent_level
+        current_last_data_type = self._last_data_type
+        current_current_data_type = self._current_data_type
+        current_column = self._column
+        current_current_token = self._current_token
+        current_current_key = self._current_key
         for _ in range(num):
             next_token = self._get_next_token()
         self._pos = current_pos
@@ -199,6 +204,11 @@ class Lexer:
         self._word_type = current_word_type
         self._line_num = current_line_num
         self._indent_level = current_indent_level
+        self._last_data_type = current_last_data_type
+        self._current_data_type = current_current_data_type
+        self._column = current_column
+        self._current_token = current_current_token
+        self._current_key = current_current_key
         return next_token
 
     def _skip_whitespace(self) -> None:
@@ -377,6 +387,9 @@ class Lexer:
         if value == Operator.LIST_ITEM.value:
             type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+            preview = self.preview_token()
+            if preview.type == TokenType.NEWLINE:
+                self.insert_str_to_text(" :", 1)
 
         if value == Operator.LANGLEBRACKET.value:
             self._type_stack.append(LexerState(TypeState.SET, type_content_state))
@@ -384,6 +397,9 @@ class Lexer:
         if value == Operator.SET_ITEM.value:
             type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.SET, type_content_state))
+            preview = self.preview_token()
+            if preview.type == TokenType.NEWLINE:
+                self.insert_str_to_text(" :", 1)
 
         if value == Operator.LPAREN.value:
             self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
@@ -391,7 +407,18 @@ class Lexer:
         if value == Operator.TUPLE_ITEM.value:
             type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
+            preview = self.preview_token()
+            if preview.type == TokenType.NEWLINE:
+                self.insert_str_to_text(" :", 1)
         return type_content_state
+
+    def insert_str_to_text(self, chars: str, change_pos: int = 0) -> None:
+        first = self.text[: self._pos]
+        second = self.text[self._pos :]
+        text = f"{first}{chars}{second}"
+        self._text = text
+        self._pos += change_pos
+        self._current_char = self.text[self._pos]
 
     def _eat_type(self, value: str | None = None) -> Token:
         if value:

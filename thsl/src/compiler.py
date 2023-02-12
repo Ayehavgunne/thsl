@@ -58,27 +58,28 @@ class Compiler:
                     if isinstance(root, tuple):
                         root = (*root, self._visit(collection))
                 case Value() as value:
+                    subtype = None
                     if self._current_key is not None:
                         subtype = self._current_key.subtype
                         if subtype is None:
                             subtype = self._current_key.type
-                        if subtype == CompoundDataType.UNKNOWN:
-                            subtype = value.type
-                        if value.type is not None:
-                            subtype = value.type
-                        if isinstance(root, list):
-                            root.append(
-                                self.cast_scalar(value.value, subtype),  # type: ignore
-                            )
-                        if isinstance(root, set):
-                            root.add(
-                                self.cast_scalar(value.value, subtype),  # type: ignore
-                            )
-                        if isinstance(root, tuple):
-                            root = (
-                                *root,
-                                self.cast_scalar(value.value, subtype),  # type: ignore
-                            )
+                    if subtype == CompoundDataType.UNKNOWN:
+                        subtype = value.type
+                    if value.type is not None:
+                        subtype = value.type
+                    if isinstance(root, list):
+                        root.append(
+                            self.cast_scalar(value.value, subtype),  # type: ignore
+                        )
+                    if isinstance(root, set):
+                        root.add(
+                            self.cast_scalar(value.value, subtype),  # type: ignore
+                        )
+                    if isinstance(root, tuple):
+                        root = (
+                            *root,
+                            self.cast_scalar(value.value, subtype),  # type: ignore
+                        )
         return root
 
     @staticmethod

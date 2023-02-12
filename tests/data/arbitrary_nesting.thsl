@@ -1,0 +1,10 @@
+arbitrary_nesting:
+	-
+		one :int: "1"
+		two :str: 2
+		five:
+			-
+				six :int: 6
+	-
+		three :int: 3
+		four :int: 4

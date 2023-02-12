@@ -392,6 +392,18 @@ def test_list_of_dicts_multiline():
     assert actual == expected
 
 
+def test_list_at_root():
+    actual = thsl.load(DATA_DIR / "list_at_root.thsl")
+    expected = [1, 2, 4, 7]
+    assert actual == expected
+
+
+def test_list_of_dicts_at_root():
+    actual = thsl.load(DATA_DIR / "list_of_dicts_at_root.thsl")
+    expected = [{"one": 1, "two": 2}, {"three": 3, "four": 4}]
+    assert actual == expected
+
+
 def test_set():
     actual = thsl.load(DATA_DIR / "set.thsl")
     expected = {"a_set": {1, 2, 3}}
@@ -416,6 +428,12 @@ def test_set_one_liner():
     assert actual == expected
 
 
+def test_set_at_root():
+    actual = thsl.load(DATA_DIR / "set_at_root.thsl")
+    expected = {1, 2, 4, 7}
+    assert actual == expected
+
+
 def test_tuple():
     actual = thsl.load(DATA_DIR / "tuple.thsl")
     expected = {"my_tuple": (1, 2, 3)}
@@ -434,7 +452,30 @@ def test_tuple_one_liner():
     assert actual == expected
 
 
+def test_tuple_at_root():
+    actual = thsl.load(DATA_DIR / "tuple_at_root.thsl")
+    expected = (1, 2, 4, 7)
+    assert actual == expected
+
+
+def test_tuple_of_dicts_at_root():
+    actual = thsl.load(DATA_DIR / "tuple_of_dicts_at_root.thsl")
+    expected = ({"one": 1, "two": 2}, {"three": 3, "four": 4})
+    assert actual == expected
+
+
 # def test_tuple_heterogeneous_one_liner():
 #     actual = thsl.load(DATA_DIR / "tuple_heterogeneous_one_liner.thsl")
 #     expected = {"tuple_one_liner": (1, 2.0)}
 #     assert actual == expected
+
+
+def test_arbitrary_nesting():
+    actual = thsl.load(DATA_DIR / "arbitrary_nesting.thsl")
+    expected = {
+        "arbitrary_nesting": [
+            {"one": 1, "two": "2", "five": [{"six": 6}]},
+            {"three": 3, "four": 4},
+        ]
+    }
+    assert actual == expected

@@ -29,7 +29,13 @@ class Parser:
         self.pos = 0
         self._indent = 0
 
-    def parse(self) -> Collection:
+    def parse(self) -> AST:
+        if self.current_token.value in (
+            *LIST_OPERATORS,
+            *SET_OPERATORS,
+            *TUPLE_OPERATORS,
+        ):
+            return self.statement_list()[0]
         root = Collection(
             type=CompoundDataType.DICT,
             line=self.line,
@@ -106,6 +112,7 @@ class Parser:
             if self.type == TokenType.NEWLINE or (
                 self.type == TokenType.OPERATOR
                 and self.current_token.value in COMPOUND_ITEM_VALUES
+                and self.current_token_indent == _indent
             ):
                 self.next_token()
             if self.type == TokenType.EOF:
@@ -241,9 +248,10 @@ class Parser:
                 return CompoundDataType.SET
             if preview_token.value in TUPLE_OPERATORS:
                 return CompoundDataType.TUPLE
-            if preview_token.value in DICT_OPERATORS:
-                return CompoundDataType.DICT
-            if preview_token.type == TokenType.KEY:
+            if (
+                preview_token.value in DICT_OPERATORS
+                or preview_token.type == TokenType.KEY
+            ):
                 return CompoundDataType.DICT
 
     def eat_iterator_items(self) -> list[AST]:
@@ -271,6 +279,8 @@ class Parser:
                 if self.current_token.type == TokenType.NEWLINE:
                     self.next_token()
                 items.append(self.make_collection(current_type))
+            elif self.current_token.type == TokenType.EOF:
+                break
             else:
                 statement = self.statement()
                 if statement:

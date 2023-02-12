@@ -1,5 +1,4 @@
 # comments use a # (pound sign, hash)
-# all root values get serialized into single dictionary
 debug :bool: true
 num :int: -3
 name :str: Frank Drebin  # strings don't need quotes and will be left/right trimmed of whitespace

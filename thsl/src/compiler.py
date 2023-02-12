@@ -43,7 +43,7 @@ class Compiler:
                     # noinspection PyTupleItemAssignment
                     root[key.name] = self.cast_scalar(  # type: ignore
                         key.items.value,  # type: ignore
-                        key.type,
+                        key.type,  # type: ignore
                     )
                 case Key(
                     items=Collection(type=CompoundDataType()),
@@ -64,16 +64,16 @@ class Compiler:
                             subtype = value.type
                         if isinstance(root, list):
                             root.append(
-                                self.cast_scalar(value.value, subtype),
+                                self.cast_scalar(value.value, subtype),  # type: ignore
                             )
                         if isinstance(root, set):
                             root.add(
-                                self.cast_scalar(value.value, subtype),
+                                self.cast_scalar(value.value, subtype),  # type: ignore
                             )
                         if isinstance(root, tuple):
                             root = (
                                 *root,
-                                self.cast_scalar(value.value, subtype),
+                                self.cast_scalar(value.value, subtype),  # type: ignore
                             )
         return root
 

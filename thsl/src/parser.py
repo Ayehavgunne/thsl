@@ -129,7 +129,7 @@ class Parser:
         self.next_token()
         return None
 
-    def eat_key(self) -> Key | None:
+    def eat_key(self) -> Key:
         name = self.value
         self.next_token()
         subtype = None
@@ -192,6 +192,9 @@ class Parser:
 
     def eat_operator(self) -> Collection:
         value = Collection(type=self.value, line=self.line, column=self.column)
+        if self.value in COMPOUND_ITEM_VALUES:
+            value.items.extend(self.eat_iterator_items())
+            return value
         if self.value == Operator.LSQUAREBRACKET.value:
             closing_operator = Operator.RSQUAREBRACKET.value
         elif self.value == Operator.LANGLEBRACKET.value:
@@ -200,9 +203,6 @@ class Parser:
             closing_operator = Operator.RCURLYBRACKET.value
         elif self.value == Operator.LPAREN.value:
             closing_operator = Operator.RPAREN.value
-        elif self.value in COMPOUND_ITEM_VALUES:
-            value.items.extend(self.eat_iterator_items())
-            return value
         else:
             raise NotImplementedError
         self.next_token()
@@ -227,7 +227,7 @@ class Parser:
 
     def eat_iterator_items(self) -> list[AST]:
         current_indent = self.current_token_indent
-        items = []
+        items: list[AST] = []
         self.set_indent()
         while self.current_token_indent == current_indent:
             self.next_token()
@@ -238,5 +238,7 @@ class Parser:
             elif self.current_token.type == TokenType.OPERATOR:
                 items.append(self.eat_operator())
             else:
-                items.append(self.statement())
+                statement = self.statement()
+                if statement:
+                    items.append(statement)
         return [item for item in items if item is not None]

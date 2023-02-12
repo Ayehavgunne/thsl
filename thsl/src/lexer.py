@@ -7,6 +7,7 @@ from thsl.src.grammar import (
     ALL_DATA_TYPE_VALUES,
     CLOSING_BRACKET_VALUES,
     CompoundDataType,
+    DataType,
     MULTI_CHAR_OPERATORS,
     Operator,
     OPERATORS_TO_IGNORE,
@@ -44,7 +45,7 @@ class TypeState(Enum):
 
 @dataclass
 class Homogeneous:
-    type: ScalarDataType
+    type: DataType | None
 
 
 @dataclass
@@ -71,8 +72,8 @@ class Lexer:
         self._current_char: str | None
         self._char_type: TokenType | None
         self._current_token: Token | None
-        self._current_data_type: ScalarDataType | None
-        self._last_data_type: ScalarDataType | None
+        self._current_data_type: DataType | None
+        self._last_data_type: DataType | None
         self._current_key: Token | None
         self._word: str
         self._word_type: TokenType | None
@@ -340,29 +341,7 @@ class Lexer:
         if token.value in CLOSING_BRACKET_VALUES:
             self._current_data_type = None
 
-        if token.value == Operator.LCURLYBRACKET.value:
-            self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
-
-        if token.value == Operator.LSQUAREBRACKET.value:
-            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
-
-        if token.value == Operator.LIST_ITEM.value:
-            type_content_state = Homogeneous(self._last_data_type)
-            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
-
-        if token.value == Operator.LANGLEBRACKET.value:
-            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
-
-        if token.value == Operator.SET_ITEM.value:
-            type_content_state = Homogeneous(self._last_data_type)
-            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
-
-        if token.value == Operator.LPAREN.value:
-            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
-
-        if token.value == Operator.TUPLE_ITEM.value:
-            type_content_state = Homogeneous(self._last_data_type)
-            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
+        type_content_state = self.set_type_stack(token.value, type_content_state)
 
         if token.value == Operator.RSQUAREBRACKET.value:
             if self._current_state.type != TypeState.LIST:
@@ -383,6 +362,36 @@ class Lexer:
             if not isinstance(type_content_state, Homogeneous):
                 self._type_stack.pop()
         return token
+
+    def set_type_stack(
+        self,
+        value: str,
+        type_content_state: TypeContentState,
+    ) -> TypeContentState:
+        if value == Operator.LCURLYBRACKET.value:
+            self._type_stack.append(LexerState(TypeState.DICT, type_content_state))
+
+        if value == Operator.LSQUAREBRACKET.value:
+            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+
+        if value == Operator.LIST_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
+            self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
+
+        if value == Operator.LANGLEBRACKET.value:
+            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
+
+        if value == Operator.SET_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
+            self._type_stack.append(LexerState(TypeState.SET, type_content_state))
+
+        if value == Operator.LPAREN.value:
+            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
+
+        if value == Operator.TUPLE_ITEM.value:
+            type_content_state = Homogeneous(self._last_data_type)
+            self._type_stack.append(LexerState(TypeState.TUPLE, type_content_state))
+        return type_content_state
 
     def _eat_type(self, value: str | None = None) -> Token:
         if value:

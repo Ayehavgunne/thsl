@@ -1,1 +1,1 @@
-"keys can be in quotes" :int: 1
+"keys can be in quotes" @int: 1

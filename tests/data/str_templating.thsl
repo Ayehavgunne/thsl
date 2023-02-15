@@ -1,2 +1,2 @@
-name :str: Frank Drebin
-template :str: 'My name is \{name\}'
+name @str: Frank Drebin
+template @str: 'My name is \{name\}'

@@ -1,2 +1,2 @@
-int :int: 1
-str :str: str
+int @int: 1
+str @str: str

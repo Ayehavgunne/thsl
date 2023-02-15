@@ -1,1 +1,1 @@
-name_single_quotes :str: 'My name is Frank Drebin'
+name_single_quotes @str: 'My name is Frank Drebin'

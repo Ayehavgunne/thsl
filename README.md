@@ -4,14 +4,14 @@ A typed configuration language and serialization format. Imagine YAML with types
 
 ## Example
 ```
-debug :bool: false
-name :str: My Name
+debug @bool: false
+name @str: My Name
 graphics:
-	target_framerate :int: 60
-	fullscreen :bool: false
+	target_framerate @int: 60
+	fullscreen @bool: false
 	resolution:
-		width :int: 1920
-		height :int: 1080
+		width @int: 1920
+		height @int: 1080
 ```
 
 Indentation is done via tabs only
@@ -52,14 +52,15 @@ Not finalized. Subject to change
 - [x] Type safety (avoids the
 [Norway](https://hitchdev.com/strictyaml/why/implicit-typing-removed/) problem)
 - [x] Comments
-- [x] Trailing Commas
+- [x] Trailing commas
 - [ ] String templating
-- Compound Types
+- [ ] String escaping
+- Compound types
   - [x] Dictionaries
   - [x] Lists
   - [x] Sets
   - [x] Tuples
-- [x] Scalar Types
+- [x] Scalar types
   - [x] Bools
   - [x] Ints
   - [x] Floats
@@ -67,13 +68,13 @@ Not finalized. Subject to change
     - [x] -inf
     - [x] -0
     - [x] nan
-    - [x] scientific notation
+    - [x] Scientific notation
   - [x] Decimals
     - [x] inf
     - [x] -inf
     - [x] -0
     - [x] nan
-    - [x] scientific notation
+    - [x] Scientific notation
   - [x] Strings
   - [x] Chars
   - [x] Binary
@@ -90,14 +91,17 @@ Not finalized. Subject to change
   - [x] Times (with the help of the dateutil library)
   - [x] DateTimes (with the help of the dateutil library)
   - [x] Intervals (with the help of the tempora library)
-  - [x] IP Addresses
+  - [x] IP addresses
   - [x] URLs
-  - [x] Environment Variables
+  - [x] Environment variables
   - [x] Paths
-  - [x] Semantic Version Numbers (using the semantic_version library)
+  - [x] Semantic version numbers (using the semantic_version library)
   - [x] Regex
-- [ ] YAML and JSON output
-  - conversion would be lossy unless only compatible types are used
-- [ ] YAML or JSON input
-- [ ] type addon system
-- [ ] dump to file
+- [ ] Type addon system
+- [ ] Dump to file
+
+## TODO
+- Serialization
+- String templating
+- Something equivalent to yaml node anchors
+- Custom type addons/plugins

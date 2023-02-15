@@ -1,5 +1,5 @@
 typed_tuple:
-	) :int: 1
-	) :float: 2
-	) :dec: 3
-	) :str: 4
+	) @int: 1
+	) @float: 2
+	) @dec: 3
+	) @str: 4

@@ -1,1 +1,1 @@
-set_one_liner: <:int:1, :float:2>
+set_one_liner: <@int:1, @float:2>

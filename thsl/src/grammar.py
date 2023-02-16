@@ -54,7 +54,6 @@ ALL_DATA_TYPE_VALUES = (*ScalarDataType.values(), *CompoundDataType.values())
 
 
 class Operator(EnumDict):
-    DECORATOR = "@"
     VALUE_DELIMITER = ":"
     MINUS = "-"
     LPAREN = "("
@@ -69,7 +68,7 @@ class Operator(EnumDict):
     LIST_ITEM = "-"
     SET_ITEM = ">"
     TUPLE_ITEM = ")"
-    TYPE_INITIATOR = ":"
+    TYPE_INITIATOR = "@"
     DECIMAL_POINT = "."
     RANGE = ".."
     ELLIPSIS = "..."

@@ -1,1 +1,1 @@
-number_sep :int: 100_000_000
+number_sep @int: 100_000_000

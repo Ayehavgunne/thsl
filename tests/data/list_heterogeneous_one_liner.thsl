@@ -1,1 +1,1 @@
-heterogeneous_list_one_liner: [:int: 1, :float: 3.14159, :dec: 2.11, :str: hello]
+heterogeneous_list_one_liner: [@int: 1, @float: 3.14159, @dec: 2.11, @str: hello]

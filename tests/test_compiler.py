@@ -404,6 +404,12 @@ def test_list_of_dicts_at_root():
     assert actual == expected
 
 
+def test_list_nesting():
+    actual = thsl.load(DATA_DIR / "list_nesting.thsl")
+    expected = [["hello", "hi"], ["hola", "greetings"]]
+    assert actual == expected
+
+
 def test_set():
     actual = thsl.load(DATA_DIR / "set.thsl")
     expected = {"a_set": {1, 2, 3}}

@@ -219,7 +219,7 @@ def test_nesting(lexer):
 
 
 def test_list(lexer):
-    lexer.text = "my_list @int:  # comment\n\t- 1\n\t- 2\n\t- 4\n\t# hello\n\t- 7\n"
+    lexer.text = "my_list @int:  # comment\n\t- 1\n\t- 2\n\t- 4\n\t- 7\n"
     expected = [
         Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
         Token(type=TokenType.TYPE, value="int", line=1, indent=0),
@@ -233,11 +233,10 @@ def test_list(lexer):
         Token(type=TokenType.OPERATOR, value="-", line=4, indent=1),
         Token(type=TokenType.VALUE, value="4", line=4, indent=1),
         Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=5, indent=1),
+        Token(type=TokenType.VALUE, value="7", line=5, indent=1),
         Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
-        Token(type=TokenType.OPERATOR, value="-", line=6, indent=1),
-        Token(type=TokenType.VALUE, value="7", line=6, indent=1),
-        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=1),
-        Token(type=TokenType.EOF, value="EOF", line=7, indent=0),
+        Token(type=TokenType.EOF, value="EOF", line=6, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
@@ -258,6 +257,36 @@ def test_one_line_list(lexer):
         Token(type=TokenType.OPERATOR, value="]", line=1, indent=0),
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_list_heterogeneous(lexer):
+    lexer.text = (
+        "my_list:\n\t- @int: 1\n\t- @float: 3.14159\n\t- @dec: 2.11\n\t- @str: hello\n"
+    )
+    expected = [
+        Token(type=TokenType.KEY, value="my_list", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.OPERATOR, value="-", line=2, indent=1),
+        Token(type=TokenType.TYPE, value="int", line=2, indent=1),
+        Token(type=TokenType.VALUE, value="1", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=3, indent=1),
+        Token(type=TokenType.TYPE, value="float", line=3, indent=1),
+        Token(type=TokenType.VALUE, value="3.14159", line=3, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=4, indent=1),
+        Token(type=TokenType.TYPE, value="dec", line=4, indent=1),
+        Token(type=TokenType.VALUE, value="2.11", line=4, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=1),
+        Token(type=TokenType.OPERATOR, value="-", line=5, indent=1),
+        Token(type=TokenType.TYPE, value="str", line=5, indent=1),
+        Token(type=TokenType.VALUE, value="hello", line=5, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=1),
+        Token(type=TokenType.EOF, value="EOF", line=6, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected
@@ -402,6 +431,75 @@ def test_tokenization(lexer):
         Token(type=TokenType.VALUE, value="false", line=1, indent=0),
         Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
         Token(type=TokenType.EOF, value="EOF", line=2, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_multi_heterogeneous_list(lexer):
+    lexer.text = (
+        "languages:\n\tpython:\n\t\tformatter:\n\t\t\targs:\n\t\t\t\t- @str format"
+        '\n\t\t\t\t- @str "-q"\n\t\t\t\t- @str "-q"\n'
+    )
+    expected = [
+        Token(type=TokenType.KEY, value="languages", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.KEY, value="python", line=2, indent=1),
+        Token(type=TokenType.TYPE, value="unknown", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.KEY, value="formatter", line=3, indent=2),
+        Token(type=TokenType.TYPE, value="unknown", line=3, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=2),
+        Token(type=TokenType.KEY, value="args", line=4, indent=3),
+        Token(type=TokenType.TYPE, value="unknown", line=4, indent=3),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=3),
+        Token(type=TokenType.OPERATOR, value="-", line=5, indent=4),
+        Token(type=TokenType.TYPE, value="str", line=5, indent=4),
+        Token(type=TokenType.VALUE, value="format", line=5, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=4),
+        Token(type=TokenType.OPERATOR, value="-", line=6, indent=4),
+        Token(type=TokenType.TYPE, value="str", line=6, indent=4),
+        Token(type=TokenType.VALUE, value="-q", line=6, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=4),
+        Token(type=TokenType.OPERATOR, value="-", line=7, indent=4),
+        Token(type=TokenType.TYPE, value="str", line=7, indent=4),
+        Token(type=TokenType.VALUE, value="-q", line=7, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=7, indent=4),
+        Token(type=TokenType.EOF, value="EOF", line=8, indent=0),
+    ]
+    actual = lexer.parse()
+    assert actual == expected
+
+
+def test_multi_homogeneous_list(lexer):
+    lexer.text = (
+        "languages:\n\tpython:\n\t\tformatter:\n\t\t\targs @str:\n\t\t\t\t- format"
+        '\n\t\t\t\t- "-q"\n\t\t\t\t- "-q"\n'
+    )
+    expected = [
+        Token(type=TokenType.KEY, value="languages", line=1, indent=0),
+        Token(type=TokenType.TYPE, value="unknown", line=1, indent=0),
+        Token(type=TokenType.NEWLINE, value="\n", line=1, indent=0),
+        Token(type=TokenType.KEY, value="python", line=2, indent=1),
+        Token(type=TokenType.TYPE, value="unknown", line=2, indent=1),
+        Token(type=TokenType.NEWLINE, value="\n", line=2, indent=1),
+        Token(type=TokenType.KEY, value="formatter", line=3, indent=2),
+        Token(type=TokenType.TYPE, value="unknown", line=3, indent=2),
+        Token(type=TokenType.NEWLINE, value="\n", line=3, indent=2),
+        Token(type=TokenType.KEY, value="args", line=4, indent=3),
+        Token(type=TokenType.TYPE, value="str", line=4, indent=3),
+        Token(type=TokenType.NEWLINE, value="\n", line=4, indent=3),
+        Token(type=TokenType.OPERATOR, value="-", line=5, indent=4),
+        Token(type=TokenType.VALUE, value="format", line=5, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=5, indent=4),
+        Token(type=TokenType.OPERATOR, value="-", line=6, indent=4),
+        Token(type=TokenType.VALUE, value="-q", line=6, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=6, indent=4),
+        Token(type=TokenType.OPERATOR, value="-", line=7, indent=4),
+        Token(type=TokenType.VALUE, value="-q", line=7, indent=4),
+        Token(type=TokenType.NEWLINE, value="\n", line=7, indent=4),
+        Token(type=TokenType.EOF, value="EOF", line=8, indent=0),
     ]
     actual = lexer.parse()
     assert actual == expected

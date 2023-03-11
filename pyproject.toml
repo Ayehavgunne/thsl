@@ -1,8 +1,9 @@
 [project]
 name = "thsl"
+dynamic = ["version"]
 description = "A typed configuration language"
 authors = [
-    {name = "Anthony Post", email = "anthony.post@icloud.com"},
+    {name = "Anthony Post", email = "post.anthony@icloud.com"},
 ]
 dependencies = [
     "python-dateutil==2.8.2",
@@ -48,7 +49,7 @@ ignore_missing_imports = true
 select = ["ALL"]
 ignore = [
     "D", "C", "I", "PD", "ANN101", "ANN102", "A003", "EM101", "EM102", "TRY003",
-    "FBT001", "FBT002", "TCH003", "PGH003", "ERA001", "E999",
+    "FBT001", "FBT002", "TCH003", "PGH003", "ERA001",
 ]
 
 #fixable = []

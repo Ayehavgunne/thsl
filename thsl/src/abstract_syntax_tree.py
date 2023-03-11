@@ -48,7 +48,7 @@ class Collection(AST):
             case str():
                 raise NotImplementedError
             case _:
-                return None
+                return
 
 
 @dataclass

@@ -79,6 +79,7 @@ class Lexer:
         self._word_type: TokenType | None
         self._line_num: int
         self._indent_level: int
+        self._last_indent_level: int
         self._type_stack = [LexerState()]
         self.user_types: list[str]
         self.text = text
@@ -104,6 +105,7 @@ class Lexer:
         self._current_char = self.text[self._pos]
         self._line_num = 1
         self._indent_level = 0
+        self._last_indent_level = self._indent_level
         self._word = ""
         self._word_type = None
         self._column = 1
@@ -190,6 +192,7 @@ class Lexer:
         current_word_type = self._word_type
         current_line_num = self._line_num
         current_indent_level = self._indent_level
+        current_last_indent_level = self._last_indent_level
         current_last_data_type = self._last_data_type
         current_current_data_type = self._current_data_type
         current_column = self._column
@@ -204,6 +207,7 @@ class Lexer:
         self._word_type = current_word_type
         self._line_num = current_line_num
         self._indent_level = current_indent_level
+        self._last_indent_level = current_last_indent_level
         self._last_data_type = current_last_data_type
         self._current_data_type = current_current_data_type
         self._column = current_column
@@ -235,6 +239,7 @@ class Lexer:
             TokenType.NEWLINE.value,
         )
         self._column = 0
+        self._last_indent_level = self._indent_level
         self._indent_level = 0
         self._increment_line_num()
         self._last_data_type = self._current_data_type
@@ -297,7 +302,7 @@ class Lexer:
                 self._word += self._current_char
             self._next_char()
         self._next_char()
-        if not self._current_key:
+        if not self._current_key and self._current_char != TokenType.NEWLINE.value:
             token = self._eat_key(
                 self._reset_word(),
             )
@@ -342,11 +347,14 @@ class Lexer:
 
         if (
             self._current_data_type is not None
+            and self._current_data_type != CompoundDataType.UNKNOWN
             and token.value not in CLOSING_BRACKET_VALUES
         ):
             type_content_state = Homogeneous(self._current_data_type)
         else:
             type_content_state = Heterogeneous()
+            if self._current_data_type == CompoundDataType.UNKNOWN:
+                self._current_data_type = None
 
         if token.value in CLOSING_BRACKET_VALUES:
             self._current_data_type = None
@@ -385,7 +393,13 @@ class Lexer:
             self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
 
         if value == Operator.LIST_ITEM.value:
-            type_content_state = Homogeneous(self._last_data_type)
+            if (
+                self._last_data_type is None
+                or self._last_indent_level >= self._indent_level
+            ):
+                type_content_state = Heterogeneous()
+            else:
+                type_content_state = Homogeneous(self._last_data_type)
             self._type_stack.append(LexerState(TypeState.LIST, type_content_state))
             preview = self.preview_token()
             if preview.type == TokenType.NEWLINE:
@@ -514,8 +528,7 @@ class Lexer:
             line_num,
         )
 
-    @staticmethod
-    def _get_type(char: str) -> TokenType:
+    def _get_type(self, char: str) -> TokenType:
         if char.isspace():
             return TokenType.WHITESPACE
         if char == TokenType.COMMENT.value:
@@ -523,6 +536,8 @@ class Lexer:
         if char == TokenType.ESCAPE.value:
             return TokenType.ESCAPE
         if char == Operator.MINUS.value:
+            if self._current_data_type is None:
+                return TokenType.OPERATOR
             return TokenType.ALPHANUMERIC
         if char in Operator.values():
             return TokenType.OPERATOR
@@ -550,6 +565,7 @@ class Lexer:
                 peek == TokenType.NEWLINE.value or peek == TokenType.COMMENT.value
             ):
                 self._next_char()
+                self._current_data_type = CompoundDataType.UNKNOWN
                 return self._make_token(TokenType.TYPE, CompoundDataType.UNKNOWN.value)
             self._skip_char()
 
@@ -581,8 +597,17 @@ class Lexer:
         if not self._word_type:
             self._word_type = self._char_type
 
-        if isinstance(self._current_state.contents, Homogeneous):
+        if (
+            isinstance(self._current_state.contents, Homogeneous)
+            and self._current_data_type is None
+        ):
             self._current_data_type = self._current_state.contents.type
+
+        if (
+            self._current_data_type is None
+            or self._current_data_type == CompoundDataType.UNKNOWN
+        ) and self._current_char == Operator.TYPE_INITIATOR.value:
+            return self._eat_type()
 
         if self._word_type == TokenType.OPERATOR and self._current_data_type not in (
             ScalarDataType.PATH,
@@ -607,12 +632,15 @@ class Lexer:
         ):
             return self._eat_rest_of_line()
 
-        if self._word_type == TokenType.ALPHANUMERIC:
+        if (
+            self._word_type == TokenType.ALPHANUMERIC
+            and self._current_data_type != CompoundDataType.UNKNOWN
+        ):
             return self._eat_alpha()
 
         if (
             self._current_state.type in (TypeState.LIST, TypeState.SET, TypeState.TUPLE)
-            and not isinstance(self._current_state.contents, Heterogeneous)
+            # and not isinstance(self._current_state.contents, Heterogeneous)
             and self._word_type == TokenType.NUMBER
         ):
             return self._eat_number()

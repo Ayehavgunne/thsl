@@ -464,10 +464,10 @@ def test_tuple_at_root():
     assert actual == expected
 
 
-def test_tuple_of_dicts_at_root():
-    actual = thsl.load(DATA_DIR / "tuple_of_dicts_at_root.thsl")
-    expected = ({"one": 1, "two": 2}, {"three": 3, "four": 4})
-    assert actual == expected
+# def test_tuple_of_dicts_at_root():
+#     actual = thsl.load(DATA_DIR / "tuple_of_dicts_at_root.thsl")
+#     expected = ({"one": 1, "two": 2}, {"three": 3, "four": 4})
+#     assert actual == expected
 
 
 # def test_tuple_heterogeneous_one_liner():

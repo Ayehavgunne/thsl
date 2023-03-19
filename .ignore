@@ -1,0 +1,10 @@
+__pypackages__
+__pycache__
+.ruff_cache
+.idea
+.pdm.toml
+.env
+.mypy_cache
+.pytest_cache
+thsl.egg-info
+.DS_Store

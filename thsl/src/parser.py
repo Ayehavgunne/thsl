@@ -236,7 +236,7 @@ class Parser:
             self.next_token()
         return value
 
-    def guess_unknown_data_type(self):
+    def guess_unknown_data_type(self) -> CompoundDataType:
         preview_distance = 1
         while preview_token := self.preview(preview_distance):
             preview_distance += 1
@@ -253,6 +253,7 @@ class Parser:
                 or preview_token.type == TokenType.KEY
             ):
                 return CompoundDataType.DICT
+        return CompoundDataType.DICT
 
     def eat_iterator_items(self) -> list[AST]:
         current_indent = self.current_token_indent
@@ -260,6 +261,8 @@ class Parser:
         self.set_indent()
         while self.current_token_indent == current_indent:
             self.next_token()
+            if self.current_token_indent != current_indent:
+                break
             if self.current_token.value in COMPOUND_ITEM_VALUES:
                 self.next_token()
             if self.current_token.type == TokenType.VALUE:

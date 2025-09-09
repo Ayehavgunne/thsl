@@ -1,0 +1,11 @@
+default:
+	{fmt}
+
+build:
+	mkdir -p release && zig build-exe -femit-bin=release/thsl src/main.zig
+
+run:
+	zig run src/main.zig
+
+fmt:
+	zig fmt src

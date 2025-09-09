@@ -151,3 +151,4 @@ pip-selfcheck.json
 /.pdm.toml
 /pdm.lock
 /.ruff_cache/
+/release

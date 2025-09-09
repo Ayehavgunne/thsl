@@ -1,0 +1,16 @@
+debug: bool = true
+num: int = -3
+name: str = Frank Drebin
+
+# a comment
+
+graphics = {
+	target_framerate: int = 60
+	fullscreen: bool = false
+	resolution = {
+		width: int = 1920
+		height: int = 1080
+    }
+	key: str
+	key_without_value: float
+}

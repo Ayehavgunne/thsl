@@ -48,60 +48,56 @@ pip install thsl
 ## Features
 Not finalized. Subject to change
 
-- [x] YAML like syntax
-- [x] Type safety (avoids the
+- [ ] YAML like syntax
+- [ ] Type safety (avoids the
 [Norway](https://hitchdev.com/strictyaml/why/implicit-typing-removed/) problem)
-- [x] Comments
-- [x] Trailing commas
+- [ ] Comments
+- [ ] Trailing commas
 - [ ] String templating
 - [ ] String escaping
 - Compound types
-  - [x] Dictionaries
-  - [x] Lists
-  - [x] Sets
-  - [x] Tuples
-- [x] Scalar types
-  - [x] Bools
-  - [x] Ints
-  - [x] Floats
-    - [x] inf
-    - [x] -inf
-    - [x] -0
-    - [x] nan
-    - [x] Scientific notation
-  - [x] Decimals
-    - [x] inf
-    - [x] -inf
-    - [x] -0
-    - [x] nan
-    - [x] Scientific notation
-  - [x] Strings
-  - [x] Chars
-  - [x] Binary
-  - [x] Hexes
-  - [x] Octals
-  - [x] Base64
-    - [x] encoding
-    - [x] decoding
-  - [x] Complex numbers
-  - [x] Ranges
-    - [x] exclusive
-    - [x] inclusive
-  - [x] Dates (with the help of the dateutil library)
-  - [x] Times (with the help of the dateutil library)
-  - [x] DateTimes (with the help of the dateutil library)
-  - [x] Intervals (with the help of the tempora library)
-  - [x] IP addresses
-  - [x] URLs
-  - [x] Environment variables
-  - [x] Paths
-  - [x] Semantic version numbers (using the semantic_version library)
-  - [x] Regex
+  - [ ] Dictionaries
+  - [ ] Lists
+  - [ ] Sets
+  - [ ] Tuples
+- [ ] Scalar types
+  - [ ] Bools
+  - [ ] Ints
+  - [ ] Floats
+    - [ ] inf
+    - [ ] -inf
+    - [ ] -0
+    - [ ] nan
+    - [ ] Scientific notation
+  - [ ] Decimals
+    - [ ] inf
+    - [ ] -inf
+    - [ ] -0
+    - [ ] nan
+    - [ ] Scientific notation
+  - [ ] Strings
+  - [ ] Chars
+  - [ ] Binary
+  - [ ] Hexes
+  - [ ] Octals
+  - [ ] Base64
+    - [ ] encoding
+    - [ ] decoding
+  - [ ] Complex numbers
+  - [ ] Ranges
+    - [ ] exclusive
+    - [ ] inclusive
+  - [ ] Dates (with the help of the dateutil library)
+  - [ ] Times (with the help of the dateutil library)
+  - [ ] DateTimes (with the help of the dateutil library)
+  - [ ] Intervals (with the help of the tempora library)
+  - [ ] IP addresses
+  - [ ] URLs
+  - [ ] Environment variables
+  - [ ] Paths
+  - [ ] Semantic version numbers (using the semantic_version library)
+  - [ ] Regex
 - [ ] Type addon system
 - [ ] Dump to file
 
 ## TODO
-- Serialization
-- String templating
-- Something equivalent to yaml node anchors
-- Custom type addons/plugins

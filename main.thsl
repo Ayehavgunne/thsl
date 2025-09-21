@@ -10,7 +10,7 @@ graphics = {
 	resolution = {
 		width: int = 1920
 		height: int = 1080
-    }
+	}
 	key: str
 	key_without_value: float
 }

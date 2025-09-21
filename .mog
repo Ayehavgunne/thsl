@@ -1,11 +1,19 @@
+sc = scala-cli
+src = src
+out = release
+exe_name = thsl
+
 default:
 	{fmt}
 
 build:
-	mkdir -p release && zig build-exe -femit-bin=release/thsl src/main.zig
+	mkdir -p {out} && {sc} --power package {src} -o {out}/{exe_name} --native-image --native-mode release-full
 
 run:
-	zig run src/main.zig
+	{sc} run {src} --native
 
 fmt:
-	zig fmt src
+	{sc} fmt {src}
+
+check:
+    {sc} compile {src}
